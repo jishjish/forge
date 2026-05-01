@@ -1,0 +1,18 @@
+Prefix	Meaning
+No prefix mentioned but not fixed or implemented on that day
+*	completed on that day
++	completed on a later day
+-	decided against on a later day
+~   opinion and musings on that day
+
+Find all open tasks
+`$ grep '^[^*+-]' .plan`
+
+Find last 5 completed tasks
+`$ grep '^\*' .plan | head -5`
+
+
+= logs ===================================
+
+## 2026-05-01
+establish project structure through architecture file
