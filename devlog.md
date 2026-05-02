@@ -17,3 +17,6 @@ Find last 5 completed tasks
 ## 2026-05-01
 establish project structure through architecture file
 + create nvidia device check and testing environement 
+
+## 2026-05-02
+set up `Kernel` class to import device info, launch operations
