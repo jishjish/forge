@@ -20,3 +20,4 @@ establish project structure through architecture file
 
 ## 2026-05-02
 set up `Kernel` class to import device info, launch operations
+reconfigure forge device check to check through CUDA driver API
