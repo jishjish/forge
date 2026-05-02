@@ -3,10 +3,10 @@
 To convert Python code to CUDA (or other GPU based syntax) via simple decorators.
 
 ## Workflow
-Python code --> decorator --> computation graph --> CUDA / ROCm (AMD)
+Forge class --> computation graph --> CUDA / ROCm (AMD)
 
 ## Project Structure
-Decorator 
+Forge orchestration class
 Graph computation
 Codegen
 
