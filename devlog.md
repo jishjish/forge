@@ -16,3 +16,4 @@ Find last 5 completed tasks
 
 ## 2026-05-01
 establish project structure through architecture file
++ create nvidia device check and testing environement 

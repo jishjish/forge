@@ -1,4 +1,3 @@
-
 # Goal
 To convert Python code to CUDA (or other GPU based syntax) via simple decorators.
 
