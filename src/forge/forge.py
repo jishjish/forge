@@ -1,5 +1,5 @@
 import os
-from models import CudaGPU, AmdGPU, MetalGPU
+from models import NvidiaGPU, AmdGPU, MetalGPU
 from dotenv import load_dotenv
 from device.device_info import get_device_type, get_device_info
 
@@ -10,7 +10,7 @@ class Forge:
     def __init__(self):
         # device info
         self.gpu_type = get_device_type()
-        self.gpu_info: CudaGPU | AmdGPU | MetalGPU | None = None
+        self.gpu_info: NvidiaGPU | AmdGPU | MetalGPU | None = None
 
         # self.graph = GraphBuilder(self.ast)
         # self.codegen = CUDACodegen(self.graph)
@@ -19,7 +19,7 @@ class Forge:
         if ENV == 'production':
             get_device_info(self.gpu_type)
         else:
-            self.gpu_info = CudaGPU()
+            self.gpu_info = NvidiaGPU()
     
     def matmul(self):
         pass

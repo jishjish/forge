@@ -1,5 +1,5 @@
 # from forge import Forge
-from models import CudaGPU
+from models import NvidiaGPU
 
 
 class Kernel:

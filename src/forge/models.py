@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class CudaGPU(BaseModel):
+class NvidiaGPU(BaseModel):
     version: str = "unknown"
     arch: str = "sm_75"                    # f string "fm_{major}{minor}" to be used for compiler reference
     max_threads_per_block: int = 1_024
