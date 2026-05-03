@@ -1,9 +1,6 @@
 import os
-from typing import Union
-# import pynvml
 from models import CudaGPU, AmdGPU, MetalGPU
 from dotenv import load_dotenv
-from constants.device import NVIDIA_CHIPS
 from device.device_info import get_device_type, get_device_info
 
 load_dotenv()
@@ -13,7 +10,8 @@ class Forge:
     def __init__(self):
         # device info
         self.gpu_type = get_device_type()
-        self.gpu_info: Union[CudaGPU, AmdGPU, MetalGPU] | None = None
+        self.gpu_info: CudaGPU | AmdGPU | MetalGPU | None = None
+
         # self.graph = GraphBuilder(self.ast)
         # self.codegen = CUDACodegen(self.graph)
 
@@ -21,8 +19,7 @@ class Forge:
         if ENV == 'production':
             get_device_info(self.gpu_type)
         else:
-            chip = NVIDIA_CHIPS.get('Tesla T4')
-            self.gpu_info = GPU(device_type="CUDA", **chip)
+            self.gpu_info = CudaGPU()
     
     def matmul(self):
         pass

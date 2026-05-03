@@ -3,11 +3,11 @@
 - Initialize the CUDA driver API: **must be called before any other function from the driver**
     - [cuInit](https://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__INITIALIZE.html)
 
-- Check latest CUDA version supported by the driver
-    - [cuDriverGetVersion](https://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__VERSION.html#group__CUDA__VERSION)
-
 - Get the device handle
     - [cuDeviceGet](https://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__DEVICE.html#group__CUDA__DEVICE)
+
+- Check latest CUDA version supported by the driver
+    - [cuDriverGetVersion](https://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__VERSION.html#group__CUDA__VERSION)
 
 - Attributes to query
     - [cuDeviceGetAttribute](https://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__DEVICE.html#group__CUDA__DEVICE_1g9c3e1414f0ad901d3278a4d6645fc266)
