@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def get_device_type():
-    
     chips = {
         "CUDA": ("libcuda.so", "cuInit(0)"),
         "AMD": ("libamdhip64.so", "hipInit(0)"),
@@ -22,7 +21,6 @@ def get_device_type():
             continue
     return "UNSUPPORTED"
 
-           
 
 def get_device_info(device_type: str):
     match device_type:
