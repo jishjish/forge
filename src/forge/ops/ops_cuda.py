@@ -5,8 +5,7 @@ of ctypes. Reference via chips dictionary in src/constants/device.py.
 import ctypes
 from forge.constants.device import CHIPS, CUDA_ATTRIBUTES
 
-
-class _CudaOps:
+class _NvidiaOps:
     def __init__(self):
         self.lib = ctypes.CDLL(CHIPS.get('CUDA')[0])
         self.lib.cuInit(0)
@@ -29,8 +28,11 @@ class _CudaOps:
 
 
 if __name__ == "__main__":
-    c = _CudaOps()
-    c._device_info()
+    # c = _NvidiaOps()
+    # c._device_info()
+    for val in CUDA_ATTRIBUTES:
+        print(val)
 
 
-    
+
+

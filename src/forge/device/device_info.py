@@ -1,9 +1,8 @@
 import ctypes
 import importlib
+from pathlib import Path
 from dotenv import load_dotenv
 from forge.constants.device import CHIPS 
-from pathlib import Path
-# from ops.ops_cuda import _CudaOps
 
 load_dotenv()
 
@@ -42,11 +41,8 @@ def get_device_info(device_type: str):
     except AttributeError:
         raise RuntimeError(f"_{device_type.capitalize()}Ops class not found in module.")
     except Exception as e:
-        raise RuntimeError(f"Failed to initialize device {device_type}: e")
+        raise RuntimeError(f"Failed to initialize device {device_type}: {e}")
 
-
-
-    
 
 if __name__ == "__main__":
     # get_device_type()
