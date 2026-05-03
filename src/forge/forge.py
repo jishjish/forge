@@ -1,6 +1,6 @@
 import os
 # import pynvml
-from models import GPU
+from models import CudaGPU
 from dotenv import load_dotenv
 from constants.device import NVIDIA_CHIPS
 from device.device_info import get_device_type, get_device_info

@@ -1,27 +1,33 @@
-import pynvml
-from models import GPU
+# from models import GPU
+import ctypes
 from dotenv import load_dotenv
-from constants.device import NVIDIA_CHIPS, SUPPORTED_DEVICES
+# from constants.device import NVIDIA_CHIPS, SUPPORTED_DEVICES
 
 load_dotenv()
 
 def get_device_type():
-    try:
-        pynvml.nvmlInit()
-        return "CUDA"
-    except pynvml.NVMLError: 
-        return "UNSUPPORTED"
+    
+    chips = {
+        "CUDA": ("libcuda.so", "cuInit(0)"),
+        "AMD": ("libamdhip64.so", "hipInit(0)"),
+        "Metal": ("libMetal.dylib", "MTLCreateSystemDefaultDevice")
+    }
 
+    for chip, (lib, init_fn) in chips.items():
+        try:
+            dll = ctypes.CDLL(lib)
+            getattr(dll, init_fn)(0)
+            return chip
+        except:
+            continue
+    return "UNSUPPORTED"
+
+           
 
 def get_device_info(device_type: str):
     match device_type:
         case "CUDA":
-            handle = pynvml.nvmlDeviceGetHandleByIndex(0)
-            name = pynvml.nvmlDeviceGetName(handle)                    # device name
-
-            #TODO: un hard code
-            thread_count = 1024
-
+            pass
         case "AMD":
             pass
         case "ARM64":
@@ -31,3 +37,4 @@ def get_device_info(device_type: str):
 
 if __name__ == "__main__":
     get_device_type()
+

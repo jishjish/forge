@@ -19,5 +19,5 @@ establish project structure through architecture file
 + create nvidia device check and testing environement 
 
 ## 2026-05-02
-set up `Kernel` class to import device info, launch operations
+set up `Device` class to import device info, launch operations
 reconfigure forge device check to check through CUDA driver API
