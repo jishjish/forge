@@ -1,6 +1,7 @@
 import os
+from typing import Union
 # import pynvml
-from models import CudaGPU
+from models import CudaGPU, AmdGPU, MetalGPU
 from dotenv import load_dotenv
 from constants.device import NVIDIA_CHIPS
 from device.device_info import get_device_type, get_device_info
@@ -12,7 +13,7 @@ class Forge:
     def __init__(self):
         # device info
         self.gpu_type = get_device_type()
-        self.gpu_info: GPU | None = None
+        self.gpu_info: Union[CudaGPU, AmdGPU, MetalGPU] | None = None
         # self.graph = GraphBuilder(self.ast)
         # self.codegen = CUDACodegen(self.graph)
 
