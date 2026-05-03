@@ -19,6 +19,17 @@ def get_device_type():
 
 
 def get_device_info(device_type: str):
+    """
+    Dynamically loads and initializes device ops based on the provided device type.
+
+    To add support for new chips:
+        1. Create supporting `ops_<chip>.py` file in src/forge/ops/ (ex: ops_amd.py)
+        2. Ensure the driver function is named `_device_info` in `_<Device>Ops` class
+        3. Create a corresponding Pydantic model at src/forge/models/
+            a. Update `self.gpu_info` in Forge class to support new model
+        4. Return the appropriate GPU model (ex: AMDGPU) from `_device_info()`
+        5. Add device lib and init functions to src/constants/device.py
+    """
     try: 
         # access file from ops if it matches the device type input
         _ops_file = [file for file in (Path(__file__).parent.parent/"ops").iterdir() if file.stem.startswith("ops_") and file.stem[len("ops_"):].upper() == device_type]
