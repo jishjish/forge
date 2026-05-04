@@ -22,4 +22,4 @@ set up `Device` class to import device info, launch operations
 reconfigure forge device check to check through CUDA driver API
 
 ## 2026-05-03
-build `_NvidiaOps`(ops_cuda.py) to handle device requests (orchestrated through `Device`)
+* build `_NvidiaOps`(ops_cuda.py) to handle device requests (orchestrated through `Device`)
