@@ -3,15 +3,17 @@ Function to get device information for NVIDIA chips through use
 of ctypes. Reference via chips dictionary in src/constants/device.py.
 """
 import ctypes
+from forge.models import NvidiaGPU
 from forge.constants.device import CHIPS, CUDA_ATTRIBUTES
 
 class _NvidiaOps:
     def __init__(self):
         self.lib = ctypes.CDLL(CHIPS.get('CUDA')[0])
-        self.lib.cuInit(0)
+        try: self.lib.cuInit(0)
+        except Exception as e: raise RuntimeError(f"Error initializing CUDA: {e}")
         self.handle = self._get_handle()
 
-        self.model = NvidiaGPU
+        self.model = NvidiaGPU()
 
     def _get_handle(self):
         handle = ctypes.c_int()
@@ -24,8 +26,13 @@ class _NvidiaOps:
         return version
 
     def _device_info(self):
-        for val in CUDA_ATTRIBUTES:
-            print(val)
+        version = self._get_version()
+        attributes = {}
+        for name, attr_id in CUDA_ATTRIBUTES.items():
+            result = ctypes.c_int()
+            self.lib.cuDeviceGetAttribute(ctypes.byref(result), attr_id, self.handle)
+            attributes[name] = result.value 
+        return NvidiaGPU(version=version.value, **attributes)
 
 
 
@@ -35,19 +42,3 @@ if __name__ == "__main__":
     for val in CUDA_ATTRIBUTES:
         print(val)
 
-
-
-
-    # class NvidiaGPU(BaseModel):
-    #     version: str = "unknown"
-    #     arch: str = "sm_75"                    # f string "fm_{major}{minor}" to be used for compiler reference
-    #     max_threads_per_block: int = 1_024
-    #     max_block_dim_x: int = 1_024
-    #     max_block_dim_y: int = 1_024
-    #     max_block_dim_z: int = 64
-    #     max_grid_dim_x: int = 2_147_483_647
-    #     max_grid_dim_y: int = 65_535
-    #     max_grid_dim_z: int = 65_535
-    #     warp_size: int = 32
-    #     sm_count: int = 40
-    #     max_threads_per_sm: int = 1_024
