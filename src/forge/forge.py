@@ -1,7 +1,7 @@
 import os
-from models import NvidiaGPU, AmdGPU, MetalGPU
+from src.forge.device.device import Device
+from src.forge.models import NvidiaGPU, AmdGPU, MetalGPU
 from dotenv import load_dotenv
-from forge.device.device import Device
 
 load_dotenv()
 ENV = os.getenv("APP_SETTINGS", "testing")
@@ -17,13 +17,13 @@ class Forge:
         # returns corresponding pydantic GPU model
         # (Forge --> Device --> get_device_info() --> gpu ops)
         if ENV == 'production': self.gpu_info = self.device._init_device()
-        else: self.gpu_info = NvidiaGPU()
+        else: 
+            self.gpu_info = NvidiaGPU()
+            print(self.gpu_info)
     
     def matmul(self):
         pass
             
-
-
 
 if __name__ == "__main__":
     f = Forge()

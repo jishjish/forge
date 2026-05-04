@@ -2,7 +2,7 @@ import ctypes
 import importlib
 from pathlib import Path
 from dotenv import load_dotenv
-from forge.constants.device import CHIPS 
+from ..constants.device import CHIPS 
 
 load_dotenv()
 
