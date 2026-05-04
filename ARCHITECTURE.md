@@ -25,4 +25,13 @@ Codegen
 
 
 
+### Future additions
+Natural progression after matmul:
+
+Elementwise (add, multiply, ReLU, GELU)
+Transpose — necessary for matmul variants like QKᵀ in attention
+Reduction (sum, max along an axis)
+Softmax — builds on reduction
+Conv2d 
+Flash attention
 
