@@ -1,4 +1,4 @@
-from models import GPU
+# from models import GPU
 
 # Basic matmul kernel
 # __global__ void matmul(float* A, float* B, float* C, int N)
@@ -30,5 +30,8 @@ def matmul_kernel():
         }}
     }};
     """
+    return kernel
 
 
+if __name__ == "__main__":
+    print(matmul_kernel())
