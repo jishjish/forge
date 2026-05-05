@@ -1,21 +1,19 @@
-# from .device_info import get_device_type, get_device_info
 import ctypes
 import platform
 import importlib
 from pathlib import Path
 from dotenv import load_dotenv
 from ..constants.device import CHIPS 
-
 load_dotenv()
 
 
 class Device:
     def __init__(self):
-        self.supported_devices = [self.get_device_type()]
+        self.device_type = self.get_device_type()
 
     def _init_device(self):
         # call for the first device in supported devices
-        try: return self.get_device_info(self.supported_devices[0])
+        try: return self.get_device_info(self.device_type)
         except: raise RuntimeError("Unsupported device")
 
     def get_device_type(self):
