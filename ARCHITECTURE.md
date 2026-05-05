@@ -16,6 +16,14 @@ Forge class --> device check --> computation graph --> CUDA / ROCm (AMD)
     - [instructions for adding support for new chips](src/forge/device/device_info.py)
     - commonality: Device class calls through `_device_info()`
 
+Forge
+  ↓
+Device (router)
+  ↓
+Ops (hardware adapters)
+  ↓
+Pydantic Models (structured output)
+
 
 ## Project Structure
 Forge orchestration class

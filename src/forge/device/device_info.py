@@ -1,4 +1,5 @@
 import ctypes
+import platform
 import importlib
 from pathlib import Path
 from dotenv import load_dotenv
@@ -7,6 +8,11 @@ from ..constants.device import CHIPS
 load_dotenv()
 
 def get_device_type():
+    system = platform.system()
+
+    if system == "Darwin": return "Metal"
+
+    # linux paths
     for chip, (lib, init_fn) in CHIPS.items():
         try:
             dll = ctypes.CDLL(lib)
