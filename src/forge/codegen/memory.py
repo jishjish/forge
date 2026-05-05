@@ -46,3 +46,4 @@ def unified_memory():
     free(comparisonResult);
     }};
     """
+    return memory

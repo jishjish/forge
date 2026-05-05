@@ -1,15 +1,18 @@
 import os
+import inspect
 from src.forge.device.device import Device
-from src.forge.models import NvidiaGPU, AmdGPU, MetalGPU
+import src.forge.models as _models
 from dotenv import load_dotenv
 
 load_dotenv()
 ENV = os.getenv("APP_SETTINGS", "testing")
 
 class Forge:
+    _gpu_models = [c[0] for c in inspect.getmembers(_models, inspect.isclass) if c[0] != 'BaseModel']
+
     def __init__(self):
         self.device = Device()
-        self.gpu_info: NvidiaGPU | AmdGPU | MetalGPU | None = None
+        self.gpu_info = None
         # self.graph = GraphBuilder(self.ast)
         # self.codegen = CUDACodegen(self.graph)
 
@@ -18,7 +21,7 @@ class Forge:
         # (Forge --> Device --> get_device_info() --> gpu ops)
         if ENV == 'production': self.gpu_info = self.device._init_device()
         else: 
-            self.gpu_info = NvidiaGPU()
+            self.gpu_info = _models.NvidiaGPU()
             print(self.gpu_info)
     
     def matmul(self):
@@ -28,3 +31,7 @@ class Forge:
 if __name__ == "__main__":
     f = Forge()
     f._device_info()
+
+
+
+

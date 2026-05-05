@@ -45,3 +45,5 @@ class MetalGPU(BaseModel):
     sm_count: int
     max_threads_per_sm: int
 
+
+

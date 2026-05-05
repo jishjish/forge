@@ -5,7 +5,12 @@
 # {
 #     int row = blockIdx.y * blockDim.y + threadIdx.y;
 #     int col = blockIdx.x * blockDim.x + threadIdx.x; 
+#     # guard against threads falling outside matrix
+#     # grid dimensions dont divide evenly into N
+#     # some threads get launched but have no valid
+#     # work to do
 #     if (row < N && col < N) {
+#         # float literal 0
 #         float sum = 0.0f;
 #         for (int k = 0, k < N, k++) {
 #             sum += A[row * n + k] * B[k * N + col];
@@ -13,9 +18,10 @@
 #         C[row * N + col] = sum;
 #     }
 # }
-# 
 
-def matmul_kernel():
+
+def square_matmul_kernel():
+    """ base implementation of a matmul on equal length vectors """
     kernel = f"""
     __global__ void matmul(float* A, float* B, float* C, int N)
     {{
@@ -23,15 +29,19 @@ def matmul_kernel():
         int col = blockIdx.x * blockDim.x + threadIdx.x; 
         if (row < N && col < N) {{
             float sum = 0.0f;
-            for (int k = 0, k < N, k++) {{
-                sum += A[row * n + k] * B[k * N + col];
+            for (int k = 0; k < N; k++) {{
+                sum += A[row * N + k] * B[k * N + col];
             }}
             C[row * N + col] = sum;
         }}
-    }};
+    }}
     """
     return kernel
 
 
+
+
+
+
 if __name__ == "__main__":
-    print(matmul_kernel())
+    print(square_matmul_kernel())
