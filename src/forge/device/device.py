@@ -1,4 +1,3 @@
-# import ctypes
 from .device_info import get_device_type, get_device_info
 
 class Device:

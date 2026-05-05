@@ -25,3 +25,6 @@ Find last 5 completed tasks
 
 ## 2026-05-03
     * build `_NvidiaOps`(ops_cuda.py) to handle device requests (orchestrated through `Device`)
+
+## 2026-05-04
+    first pass at matmul 
