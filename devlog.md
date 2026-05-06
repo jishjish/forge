@@ -36,4 +36,3 @@ Find last 5 completed tasks
     add metal (apple silicon) support - reference instructions `src/forge/device/device.py`
         ops/ops_metal.py
         `_MetalOps` class in 
-        
