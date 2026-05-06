@@ -12,7 +12,6 @@ class _NvidiaOps:
         try: self.lib.cuInit(0)
         except Exception as e: raise RuntimeError(f"Error initializing CUDA: {e}")
         self.handle = self._get_handle()
-
         self.model = NvidiaGPU()
 
     def _get_handle(self):

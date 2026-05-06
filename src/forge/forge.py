@@ -22,10 +22,9 @@ class Forge:
         return [m.__name__ for m in cls._gpu_models]
 
     def _device_info(self):
-        # returns corresponding pydantic GPU model
-        # (Forge --> Device --> get_device_info() --> gpu ops)
+        # returns corresponding pydantic GPU model; (Forge --> Device --> get_device_info() --> gpu ops)
         if ENV == 'production': 
-            gpu_info = self.device._init_device()
+            gpu_info = self.device.get_device_info()
             assert isinstance(gpu_info, tuple(self._gpu_models)), f"Unsupported GPU: {type(gpu_info).__name__}. Supported: {[c.__name__ for c in self._gpu_models]}"
             print(gpu_info)
             self.gpu_info = gpu_info

@@ -28,3 +28,6 @@ Find last 5 completed tasks
 
 ## 2026-05-04
     first pass at matmul 
+
+## 2026-05-05
+    * merge `device_info.py` helper functions into Device class

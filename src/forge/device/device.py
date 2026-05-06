@@ -6,15 +6,9 @@ from dotenv import load_dotenv
 from ..constants.device import CHIPS 
 load_dotenv()
 
-
 class Device:
     def __init__(self):
         self.device_type = self.get_device_type()
-
-    def _init_device(self):
-        # call for the first device in supported devices
-        try: return self.get_device_info(self.device_type)
-        except: raise RuntimeError("Unsupported device")
 
     def get_device_type(self):
         system = platform.system()
@@ -29,7 +23,7 @@ class Device:
                 continue
         return "UNSUPPORTED"
 
-    def get_device_info(self, device_type: str):
+    def get_device_info(self):
         """
         Dynamically loads and initializes device ops based on the provided device type.
 
@@ -43,22 +37,17 @@ class Device:
         """
         try: 
             # access file from ops if it matches the device type input
-            _ops_file = [file for file in (Path(__file__).parent.parent/"ops").iterdir() if file.stem.startswith("ops_") and file.stem[len("ops_"):].upper() == device_type]
+            _ops_file = [file for file in (Path(__file__).parent.parent/"ops").iterdir() if file.stem.startswith("ops_") and file.stem[len("ops_"):].upper() == self.device_type]
             module = importlib.import_module(f"forge.ops.{_ops_file[0].stem}")
-            cls = getattr(module, f"_{device_type.capitalize()}Ops")
+            cls = getattr(module, f"_{self.device_type.capitalize()}Ops")
             req = cls()
             return req._device_info()
         except FileNotFoundError:
-            raise RuntimeError(f"No file found for device: {device_type}.")
+            raise RuntimeError(f"No file found for device: {self.device_type}.")
         except AttributeError:
-            raise RuntimeError(f"_{device_type.capitalize()}Ops class not found in module.")
+            raise RuntimeError(f"_{self.device_type.capitalize()}Ops class not found in module.")
         except Exception as e:
-            raise RuntimeError(f"Failed to initialize device {device_type}: {e}")
-
-
-
-
-
+            raise RuntimeError(f"Failed to initialize device {self.device_type}: {e}")
 
 
 
@@ -69,12 +58,10 @@ class Device:
 if __name__ == "__main__":
     d = Device()
     # print(d.supported_devices)
-    print(d._init_device())
 
 
 
-
-    # future methods for consideration 
+    """ future methods for consideration """
     #     def _get_optimal_block_size(self, op, matrix_dim):
     #         """ calculates best launch params for a given operation"""
     #         pass
