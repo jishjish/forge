@@ -1,5 +1,6 @@
 import os
 import inspect
+import importlib
 from rich import print
 from pathlib import Path
 from dotenv import load_dotenv
@@ -21,8 +22,13 @@ class Forge:
         # self.codegen = CUDACodegen(self.graph)
 
     @classmethod
-    def supported_gpus(cls):
-        return [m.__name__ for m in cls._gpu_models]
+    def supported_gpus(cls): return [m.__name__ for m in cls._gpu_models]
+
+    @classmethod
+    def supported_portfolio_ops(cls): return cls._portfolio_ops
+
+    @classmethod
+    def supported_linalg_ops(cls): return cls._linalg_ops
 
     def _device_info(self):
         # returns corresponding pydantic GPU model; (Forge --> Device --> get_device_info() --> gpu ops)
@@ -36,15 +42,22 @@ class Forge:
             self.gpu_info = _models.NvidiaGPU()
             print(self.gpu_info)
     
-    def matmul(self):
-        pass
+    def run(self, op: str, **kwargs):
+        assert op in self._portfolio_ops or op in self._linalg_ops, \
+            f"{op} not found. Supported ops: {self._portfolio_ops + self._linalg_ops}"
+        
+        if op in self._portfolio_ops: import_path = f"src.forge.codegen.portfolio.op_{op}"
+        else: import_path = f"src.forge.codegen.linalg.op_{op}"
+
+        importlib.import_module(import_path)
+        print('successfully imported')
+
+        
+
             
+
 if __name__ == "__main__":
     f = Forge()
     # f._device_info()
     # print(f._gpu_models)
-    print(f._portfolio_ops)
-
-
-
-
+    print(f.run('matmul'))
