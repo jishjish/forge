@@ -1,6 +1,7 @@
 import os
 import inspect
 from rich import print
+from pathlib import Path
 from dotenv import load_dotenv
 import src.forge.models as _models
 from src.forge.device.device import Device
@@ -10,6 +11,8 @@ ENV = os.getenv("APP_SETTINGS", "testing")
 
 class Forge:
     _gpu_models = [c[1] for c in inspect.getmembers(_models, inspect.isclass) if c[0] != 'BaseModel']
+    _portfolio_ops = [file.stem[len("op_"):] for file in (Path(__file__).parent/"codegen/portfolio").iterdir() if file.stem.startswith("op")]
+    _linalg_ops = [file.stem[len("op_"):] for file in (Path(__file__).parent/"codegen/linalg").iterdir() if file.stem.startswith("op")]
 
     def __init__(self):
         self.device = Device()
@@ -38,8 +41,9 @@ class Forge:
             
 if __name__ == "__main__":
     f = Forge()
-    f._device_info()
+    # f._device_info()
     # print(f._gpu_models)
+    print(f._portfolio_ops)
 
 
 

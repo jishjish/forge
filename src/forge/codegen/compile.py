@@ -1,5 +1,5 @@
 import inspect
-from .matmul import square_matmul_kernel
+from .linalg.op_matmul import square_matmul_kernel
 from .memory import unified_memory
 import src.forge.models as _models
 from pydantic import BaseModel
