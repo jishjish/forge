@@ -25,7 +25,7 @@ class Device:
 
     def get_device_info(self):
         # Dynamically loads and initializes device ops based on the provided device type. 
-        # See: `src/forge/device/support_checklist.md`
+        # NOTE: check `src/forge/device/support_checklist.md` for new chip support
         try: 
             # access file from ops if it matches the device type input
             _ops_file = [file for file in (Path(__file__).parent.parent/"ops").iterdir() if file.stem.startswith("ops_") and file.stem[len("ops_"):].upper() == self.device_type]
@@ -39,7 +39,6 @@ class Device:
             raise RuntimeError(f"_{self.device_type.capitalize()}Ops class not found in module.")
         except Exception as e:
             raise RuntimeError(f"Failed to initialize device {self.device_type}: {e}")
-
 
 
 
