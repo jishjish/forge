@@ -5,12 +5,11 @@ import src.forge.models as _models
 from pydantic import BaseModel
 
 class Compile:
-    # _gpu_models = [c[0] for c in inspect.getmembers(_models, inspect.isclass) if c[0] != 'BaseModel']
     _gpu_models = {name: cls for name, cls in inspect.getmembers(_models, inspect.isclass) 
                    if issubclass(cls, BaseModel) and cls is not BaseModel}
 
-    def __init__(self):
-        pass
+    # def __init__(self):
+    #     pass
 
     def compile_square_matmul(self, N: int, gpu):
         kernel = square_matmul_kernel()                 # the __global__ function
