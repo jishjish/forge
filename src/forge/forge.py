@@ -25,10 +25,7 @@ class Forge:
     def supported_gpus(cls): return [m.__name__ for m in cls._gpu_models]
 
     @classmethod
-    def supported_portfolio_ops(cls): return cls._portfolio_ops
-
-    @classmethod
-    def supported_linalg_ops(cls): return cls._linalg_ops
+    def supported_ops(cls): return {"portfolio_ops": cls._portfolio_ops, "linalg_ops": cls._linalg_ops}
 
     def _device_info(self):
         # returns corresponding pydantic GPU model; (Forge --> Device --> get_device_info() --> gpu ops)
@@ -60,4 +57,5 @@ if __name__ == "__main__":
     f = Forge()
     # f._device_info()
     # print(f._gpu_models)
-    print(f.run('matmul'))
+    # print(f.run('matmul'))
+    print(f.supported_ops())
