@@ -27,7 +27,7 @@ Find last 5 completed tasks
     * build `_NvidiaOps`(ops_cuda.py) to handle device requests (orchestrated through `Device`)
 
 ## 2026-05-04
-    first pass at matmul 
+    - first pass at matmul 
 
 ## 2026-05-05
     * merge `device_info.py` helper functions into Device class
@@ -36,3 +36,4 @@ Find last 5 completed tasks
     add metal (apple silicon) support - reference instructions `src/forge/device/device.py`
         ops/ops_metal.py
         `_MetalOps` class in 
+    DEBUG

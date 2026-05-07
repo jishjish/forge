@@ -5,6 +5,7 @@ of ctypes. Reference via chips dictionary in src/constants/device.py.
 import ctypes
 from forge.models import NvidiaGPU
 from ..constants.device import CHIPS, CUDA_ATTRIBUTES
+from ..helpers import DEBUG
 
 class _NvidiaOps:
     def __init__(self):
