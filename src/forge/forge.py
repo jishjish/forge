@@ -6,6 +6,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import src.forge.models as _models
 from src.forge.device.device import Device
+from .helpers import DEBUG
 
 load_dotenv()
 ENV = os.getenv("APP_SETTINGS", "testing")
@@ -32,12 +33,15 @@ class Forge:
         if ENV == 'production': 
             gpu_info = self.device.get_device_info()
             assert isinstance(gpu_info, tuple(self._gpu_models)), f"Unsupported GPU: {type(gpu_info).__name__}. Supported: {[c.__name__ for c in self._gpu_models]}"
-            print(gpu_info)
             self.gpu_info = gpu_info
+            if DEBUG >= 1: 
+                print("Production environment...")
+                print(f"[dim]Device initialized:[/dim] {self.gpu_info}")
         else: 
-            print("[bold red]Warning:[/bold red] [white]Env set to [italic bright_cyan]testing[/italic bright_cyan], returning base NVIDIA model[/white]")
             self.gpu_info = _models.NvidiaGPU()
-            print(f"[dim]Loaded mock device:[/dim] {self.gpu_info}")
+            if DEBUG >= 1: 
+                print("[bold red]Warning:[/bold red] [white]Env set to [italic bright_cyan]testing[/italic bright_cyan], returning base NVIDIA model[/white]")
+                print(f"[dim]Loaded mock device:[/dim] {self.gpu_info}")
     
     def run(self, op: str, **kwargs):
         assert op in self._portfolio_ops or op in self._linalg_ops, \
@@ -46,15 +50,20 @@ class Forge:
         # import bases on provided op; either through `portfolio` or `linalg`
         if op in self._portfolio_ops: import_path = f"src.forge.codegen.portfolio.op_{op}"
         else: import_path = f"src.forge.codegen.linalg.op_{op}"
+        if DEBUG >= 1:
+            print(f"Import path: {import_path} for {op} operation")
+            print(f"Kwargs: {kwargs}")
 
-        try: ops = importlib.import_module(import_path)
-        except ModuleNotFoundError: raise RuntimeError(f"Op module not found: {import_path}")
+        try: 
+            ops = importlib.import_module(import_path)
+        except ModuleNotFoundError: 
+            raise RuntimeError(f"Op module not found: {import_path}")
        
-
 
 if __name__ == "__main__":
     f = Forge()
     f._device_info()
     # print(f._gpu_models)
-    # print(f.run('matmul'))
+    print(f.run('matmul'))
     # print(f.supported_ops())
+    # print(DEBUG)
