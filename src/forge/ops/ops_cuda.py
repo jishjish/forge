@@ -1,7 +1,3 @@
-"""
-Function to get device information for NVIDIA chips through use 
-of ctypes. Reference via chips dictionary in src/constants/device.py.
-"""
 import ctypes
 from pathlib import Path
 from ..helpers import DEBUG
