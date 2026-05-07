@@ -42,14 +42,14 @@ class Forge:
     def run(self, op: str, **kwargs):
         assert op in self._portfolio_ops or op in self._linalg_ops, \
             f"{op} not found. Supported ops: {self._portfolio_ops + self._linalg_ops}"
-        
+
+        # import bases on provided op; either through `portfolio` or `linalg`
         if op in self._portfolio_ops: import_path = f"src.forge.codegen.portfolio.op_{op}"
         else: import_path = f"src.forge.codegen.linalg.op_{op}"
 
-        importlib.import_module(import_path)
-        print('successfully imported')
-
-        
+        try: ops = importlib.import_module(import_path)
+        except ModuleNotFoundError: raise RuntimeError(f"Op module not found: {import_path}")
+       
 
             
 
@@ -57,5 +57,5 @@ if __name__ == "__main__":
     f = Forge()
     # f._device_info()
     # print(f._gpu_models)
-    # print(f.run('matmul'))
-    print(f.supported_ops())
+    print(f.run('matmul'))
+    # print(f.supported_ops())
