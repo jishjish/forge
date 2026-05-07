@@ -26,7 +26,7 @@ class Device:
                 if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] |Detected: {chip}")
                 return chip
             except:
-                if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] |Skipping: {chip}: e")
+                if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] |Skipping: {chip}: {e}")
                 continue
         return "UNSUPPORTED"
 
@@ -36,9 +36,14 @@ class Device:
         try: 
             # access file from ops if it matches the device type input
             _ops_file = [file for file in (Path(__file__).parent.parent/"ops").iterdir() if file.stem.startswith("ops_") and file.stem[len("ops_"):].upper() == self.device_type.upper()]
-            module = importlib.import_module(f"forge.ops.{_ops_file[0].stem}")
+            module = importlib.import_module(f"src.forge.ops.{_ops_file[0].stem}")
             cls = getattr(module, f"_{self.device_type.capitalize()}Ops")
             req = cls()
+            if DEBUG >= 1: 
+                print(f"[dim]forge ({Path(__file__).name})[/dim] | ops file: {_ops_file}")
+                print(f"[dim]forge ({Path(__file__).name})[/dim] | importing module: {module}")
+                print(f"[dim]forge ({Path(__file__).name})[/dim] | cls: {cls}")
+
             return req._device_info()
         except FileNotFoundError:
             raise RuntimeError(f"No file found for device: {self.device_type}.")
@@ -51,9 +56,11 @@ class Device:
 
 if __name__ == "__main__":
     d = Device()
-    print(f"Device type: {d.device_type}")
+    # print(f"Device type: {d.device_type}")
     d.get_device_info()
     # print(d.supported_devices)
+
+    
 
     """ future methods for consideration """
     #     def _get_optimal_block_size(self, op, matrix_dim):

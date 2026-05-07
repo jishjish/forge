@@ -1,7 +1,7 @@
 import ctypes
 from pathlib import Path
 from ..helpers import DEBUG
-from forge.models import NvidiaGPU, MetalGPU
+from src.forge.models import MetalGPU
 from ..constants.device import CHIPS, CUDA_ATTRIBUTES
 
 class _MetalOps:
@@ -40,8 +40,9 @@ class _MetalOps:
 
 
 if __name__ == "__main__":
-    # c = _NvidiaOps()
+    c = _MetalOps()
+
     # c._device_info()
-    for val in CUDA_ATTRIBUTES:
-        print(val)
+    # for val in CUDA_ATTRIBUTES:
+    #     print(val)
 

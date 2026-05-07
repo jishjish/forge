@@ -1,5 +1,7 @@
+# Device
 Dynamically loads and initializes device ops based on the provided device type.
 
+## New Chip Support
 To add support for new chips:
     1. Create supporting `ops_<chip>.py` file in src/forge/ops/ (ex: ops_amd.py)
     2. Ensure the driver function is named `_device_info` in `_<Device>Ops` class
