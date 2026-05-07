@@ -1,6 +1,6 @@
 from unittest.mock import patch
-from src.forge.forge import Forge
-from src.forge.models import NvidiaGPU
+from forge.forge import Forge
+from forge.models import NvidiaGPU
 
 
 def test_device_info_testing_env(monkeypatch):
