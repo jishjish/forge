@@ -54,10 +54,8 @@ class Forge:
             print(f"Import path: {import_path} for {op} operation")
             print(f"Kwargs: {kwargs}")
 
-        try: 
-            ops = importlib.import_module(import_path)
-        except ModuleNotFoundError: 
-            raise RuntimeError(f"Op module not found: {import_path}")
+        try: ops = importlib.import_module(import_path)
+        except ModuleNotFoundError: raise RuntimeError(f"Op module not found: {import_path}")
        
 
 if __name__ == "__main__":
