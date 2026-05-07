@@ -5,6 +5,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from ..constants.device import CHIPS 
 from ..helpers import DEBUG
+from rich import print
 
 load_dotenv()
 
@@ -14,17 +15,18 @@ class Device:
 
     def get_device_type(self):
         system = platform.system()
-        if DEBUG >= 1: print(f"Platform: {system}")
+        if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] | platform: {system}")
+
         if system == "Darwin": return "Metal"
         # linux paths
         for chip, (lib, init_fn) in CHIPS.items():
             try:
                 dll = ctypes.CDLL(lib)
                 getattr(dll, init_fn)(0)
-                if DEBUG >= 1: print(f"Detected: {chip}")
+                if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] |Detected: {chip}")
                 return chip
             except:
-                if DEBUG >= 1: print(f"Skipping: {chip}: e")
+                if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] |Skipping: {chip}: e")
                 continue
         return "UNSUPPORTED"
 

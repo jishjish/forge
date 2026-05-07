@@ -35,13 +35,11 @@ class Forge:
             assert isinstance(gpu_info, tuple(self._gpu_models)), f"Unsupported GPU: {type(gpu_info).__name__}. Supported: {[c.__name__ for c in self._gpu_models]}"
             self.gpu_info = gpu_info
             if DEBUG >= 1: 
-                print("Production environment...")
-                print(f"[dim]Device initialized:[/dim] {self.gpu_info}")
+                print(f"[dim]forge ({Path(__file__).name})[/dim] | [dim]Device initialized:[/dim] {self.gpu_info}")
         else: 
             self.gpu_info = _models.NvidiaGPU()
             if DEBUG >= 1: 
-                print("[bold red]Warning:[/bold red] [white]Env set to [italic bright_cyan]testing[/italic bright_cyan], returning base NVIDIA model[/white]")
-                print(f"[dim]Loaded mock device:[/dim] {self.gpu_info}")
+                print(f"[dim]forge ({Path(__file__).name})[/dim] | [white]env set to testing, returning base NVIDIA model[/white]")
     
     def run(self, op: str, **kwargs):
         assert op in self._portfolio_ops or op in self._linalg_ops, \
@@ -51,8 +49,8 @@ class Forge:
         if op in self._portfolio_ops: import_path = f"src.forge.codegen.portfolio.op_{op}"
         else: import_path = f"src.forge.codegen.linalg.op_{op}"
         if DEBUG >= 1:
-            print(f"Import path: {import_path} for {op} operation")
-            print(f"Kwargs: {kwargs}")
+            print(f"[dim]forge ({Path(__file__).name})[/dim] | Import path: {import_path} for {op} operation")
+            print(f"[dim]forge ({Path(__file__).name})[/dim] | Kwargs: {kwargs}")
 
         try: ops = importlib.import_module(import_path)
         except ModuleNotFoundError: raise RuntimeError(f"Op module not found: {import_path}")
