@@ -4,8 +4,8 @@ import importlib
 from rich import print
 from pathlib import Path
 from dotenv import load_dotenv
-import src.forge.models as _models
-from src.forge.device.device import Device
+import forge.models as _models
+from forge.device.device import Device
 from .helpers import DEBUG
 
 load_dotenv()

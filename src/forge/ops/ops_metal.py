@@ -1,7 +1,7 @@
 import ctypes
 from pathlib import Path
 from ..helpers import DEBUG
-from src.forge.models import MetalGPU
+from forge.models import MetalGPU
 from ..constants.device import CHIPS, CUDA_ATTRIBUTES
 
 class _MetalOps:
