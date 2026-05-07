@@ -35,9 +35,9 @@ class Forge:
             print(gpu_info)
             self.gpu_info = gpu_info
         else: 
-            print("[bold yellow]Warning: [white]Env set to `testing`, returnign base NVIDIA model")
+            print("[bold red]Warning:[/bold red] [white]Env set to [italic bright_cyan]testing[/italic bright_cyan], returning base NVIDIA model[/white]")
             self.gpu_info = _models.NvidiaGPU()
-            print(self.gpu_info)
+            print(f"[dim]Loaded mock device:[/dim] {self.gpu_info}")
     
     def run(self, op: str, **kwargs):
         assert op in self._portfolio_ops or op in self._linalg_ops, \
@@ -51,11 +51,10 @@ class Forge:
         except ModuleNotFoundError: raise RuntimeError(f"Op module not found: {import_path}")
        
 
-            
 
 if __name__ == "__main__":
     f = Forge()
-    # f._device_info()
+    f._device_info()
     # print(f._gpu_models)
-    print(f.run('matmul'))
+    # print(f.run('matmul'))
     # print(f.supported_ops())
