@@ -4,6 +4,8 @@ import importlib
 from pathlib import Path
 from dotenv import load_dotenv
 from ..constants.device import CHIPS 
+from ..helpers import DEBUG
+
 load_dotenv()
 
 class Device:
@@ -12,14 +14,17 @@ class Device:
 
     def get_device_type(self):
         system = platform.system()
+        if DEBUG >= 1: print(f"Platform: {system}")
         if system == "Darwin": return "Metal"
         # linux paths
         for chip, (lib, init_fn) in CHIPS.items():
             try:
                 dll = ctypes.CDLL(lib)
                 getattr(dll, init_fn)(0)
+                if DEBUG >= 1: print(f"Detected: {chip}")
                 return chip
             except:
+                if DEBUG >= 1: print(f"Skipping: {chip}: e")
                 continue
         return "UNSUPPORTED"
 
@@ -44,6 +49,7 @@ class Device:
 
 if __name__ == "__main__":
     d = Device()
+    # d.get_device_type()
     # print(d.supported_devices)
 
     """ future methods for consideration """
