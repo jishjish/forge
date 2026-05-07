@@ -1,3 +1,4 @@
+import pytest
 from unittest.mock import patch
 from forge.forge import Forge
 from forge.models import NvidiaGPU
@@ -18,3 +19,8 @@ def test_device_info_production_env(monkeypatch):
         f._device_info()
         assert f.gpu_info == mock_gpu
     
+
+def test_run_invalid_op():
+    f = Forge()
+    with pytest.raises(AssertionError):
+        f.run("invalid_operation")
