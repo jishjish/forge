@@ -7,3 +7,4 @@
 - Class to get device information for Apple Silicon chips through use of <?>. 
 - Reference via chips dictionary in src/constants/device.py.
 - [Feature Set Tables](https://developer.apple.com/metal/Metal-Feature-Set-Tables.pdf)
+- [Metal Shading Language Specs](https://developer.apple.com/metal/Metal-Shading-Language-Specification.pdf)

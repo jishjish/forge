@@ -1,16 +1,16 @@
 import ctypes
 from pathlib import Path
 from ..helpers import DEBUG
-from forge.models import MetalGPU
+from ..models import MetalGPU
 from ..constants.device import CHIPS, CUDA_ATTRIBUTES
 
 class _MetalOps:
     def __init__(self):
         self.lib = ctypes.CDLL(CHIPS.get('Metal')[0])
         try: self.lib.cuInit(0)
-        except Exception as e: raise RuntimeError(f"Error initializing CUDA: {e}")
-        self.handle = self._get_handle()
-        self.model = MetalGPU()
+        except Exception as e: raise RuntimeError(f"Error initializing Metal: {e}")
+        # self.handle = self._get_handle()
+        # self.model = MetalGPU()
 
 # 
 #     def _get_version(self):
@@ -34,9 +34,7 @@ class _MetalOps:
 
 
 if __name__ == "__main__":
-    c = _MetalOps()
+    # c = _MetalOps()
+    print(CHIPS.get("Metal")[0])
 
-    # c._device_info()
-    # for val in CUDA_ATTRIBUTES:
-    #     print(val)
 

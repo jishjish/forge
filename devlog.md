@@ -15,8 +15,11 @@ Find last 5 completed tasks
 
 = logs ===================================
 
+## ongoing
+    DEBUG
+    establish project structure through architecture file
+
 ## 2026-05-01
-    [ongoing] establish project structure through architecture file
     + create nvidia device check and testing environement 
 
 ## 2026-05-02
@@ -36,4 +39,3 @@ Find last 5 completed tasks
     add metal (apple silicon) support - reference instructions `src/forge/device/device.py`
         ops/ops_metal.py
         `_MetalOps` class in 
-    DEBUG
