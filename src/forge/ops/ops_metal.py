@@ -6,18 +6,12 @@ from ..constants.device import CHIPS, CUDA_ATTRIBUTES
 
 class _MetalOps:
     def __init__(self):
-        # self.lib = ctypes.CDLL(CHIPS.get('CUDA')[0])
-        # try: self.lib.cuInit(0)
-        # except Exception as e: raise RuntimeError(f"Error initializing CUDA: {e}")
-        # self.handle = self._get_handle()
+        self.lib = ctypes.CDLL(CHIPS.get('Metal')[0])
+        try: self.lib.cuInit(0)
+        except Exception as e: raise RuntimeError(f"Error initializing CUDA: {e}")
+        self.handle = self._get_handle()
         self.model = MetalGPU()
 
-#     def _get_handle(self):
-#         handle = ctypes.c_int()
-#         self.lib.cuDeviceGet(ctypes.byref(handle), 0)
-#         if DEBUG >= 1: 
-#             print(f"[dim]forge ({Path(__file__).name})[/dim] | Handle: {handle}")
-#         return handle
 # 
 #     def _get_version(self):
 #         version = ctypes.c_int()

@@ -34,7 +34,7 @@ class AmdGPU(BaseModel):
 class MetalGPU(BaseModel):
     version: str
     # arch: str                       
-    # max_threads_per_block: int
+    max_threads_per_block: int
     # max_block_dim_x: int
     # max_block_dim_y: int
     # max_block_dim_z: int
