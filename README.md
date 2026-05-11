@@ -45,5 +45,5 @@ Early development.
 ```bash
 git clone https://github.com/jishjish/forge
 cd forge
-pip install -r requirements.txt
+uv pip install -r requirements.txt
 ```

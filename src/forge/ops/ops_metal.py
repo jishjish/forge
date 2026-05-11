@@ -20,21 +20,20 @@ class _MetalOps:
 #             print(f"[dim]forge ({Path(__file__).name})[/dim] | CUDA Version: {version}")
 #         return version
 
-    def _device_info(self):
-        version = self._get_version()
-        attributes = {}
-        for name, attr_id in CUDA_ATTRIBUTES.items():
-            result = ctypes.c_int()
-            self.lib.cuDeviceGetAttribute(ctypes.byref(result), attr_id, self.handle)
-            attributes[name] = result.value 
-        if DEBUG >= 1: 
-            print(f"[dim]forge ({Path(__file__).name})[/dim] | CUDA Specs: {attributes}")
-        return MetalGPU(version=version.value, **attributes)
-
+#     def _device_info(self):
+#         version = self._get_version()
+#         attributes = {}
+#         for name, attr_id in CUDA_ATTRIBUTES.items():
+#             result = ctypes.c_int()
+#             self.lib.cuDeviceGetAttribute(ctypes.byref(result), attr_id, self.handle)
+#             attributes[name] = result.value 
+#         if DEBUG >= 1: 
+#             print(f"[dim]forge ({Path(__file__).name})[/dim] | CUDA Specs: {attributes}")
+#         return MetalGPU(version=version.value, **attributes)
+# 
 
 
 if __name__ == "__main__":
-    # c = _MetalOps()
-    print(CHIPS.get("Metal")[0])
+    c = _MetalOps()
 
 
