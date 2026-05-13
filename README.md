@@ -9,6 +9,8 @@ Forge queries your GPU's hardware capabilities at runtime and uses that informat
 
 ## Architecture
 
+![Forge Architecture](assets/forge_architecture.svg)
+
 - **Device Discovery**: Plugin-style system for runtime GPU detection and hardware querying
 - **Device State**: Pydantic models representing hardware capabilities and configuration
 - **Kernel Generation**: Capability-aware compute kernel emission
