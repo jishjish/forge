@@ -30,20 +30,12 @@ class AmdGPU(BaseModel):
     max_threads_per_sm: int
 
 
-# TODO: update for apple specs
 class MetalGPU(BaseModel):
-    version: str
-    # arch: str                       
-    max_threads_per_block: int
-    # max_block_dim_x: int
-    # max_block_dim_y: int
-    # max_block_dim_z: int
-    # max_grid_dim_x: int
-    # max_grid_dim_y: int
-    # max_grid_dim_z: int
-    # warp_size: int
-    # sm_count: int
-    # max_threads_per_sm: int
-
-
+    name: str = "unknown"
+    maxThreadgroupMemoryLength: int = 0
+    maxThreadsPerThreadgroupX: int = 0
+    maxThreadsPerThreadgroupY: int = 0
+    maxThreadsPerThreadgroupZ: int = 0
+    recommendedMaxWorkingSetSize: int = 0
+    supportsFamily: str = "unknown"
 
