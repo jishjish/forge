@@ -58,8 +58,8 @@ class Forge:
 
 if __name__ == "__main__":
     f = Forge()
-    print(f._device_info()) 
+    # print(f._device_info()) 
     # print(f._gpu_models)
     # print(f.run('matmul'))
-    # print(f.supported_ops())
+    print(f.supported_ops())
     # print(DEBUG)
