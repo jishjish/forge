@@ -1,9 +1,19 @@
+"""
+# NOTE: Metal has to be accessed through a C++ shim, because 
+Apple provides c++ headers (not a system library). So rather than 
+accessing through `CHIPS.get('Metal'), this is invoked through 
+`third_party/metal_shim.cpp`.
+
+Because of this we reference the build path and then the function call to instantiate. 
+"""
+
+
+# ******************* SUPPORTED CHIPS *******************
 CHIPS = {
     "CUDA": ("libcuda.so", "cuInit(0)"),
     "AMD": ("libamdhip64.so", "hipInit(0)"),
-    "Metal": ("libMetal.dylib", "MTLCreateSystemDefaultDevice")
+    "Metal": ("third_party/build/libforge_metal.dylib", "forge_get_device")
 }
-
 
 
 # ******************* CUDA ATTRIBUTES *******************
@@ -20,4 +30,31 @@ CUDA_ATTRIBUTES = {
     "warp_size": 10,
     "sm_count": 16,
     "max_threads_per_sm": 39,
+}
+
+
+
+# ******************* METAL ATTRIBUTES *******************
+METAL_ATTRIBUTES = {
+    "name": "forge_device_name", 
+    "maxThreadgroupMemoryLength": "forge_max_threadgroup_memory", 
+    "maxThreadsPerThreadgroupX": "forge_max_threads_per_group_x",
+    "maxThreadsPerThreadgroupY": "forge_max_threads_per_group_y",
+    "maxThreadsPerThreadgroupZ": "forge_max_threads_per_group_z",
+    "recommendedMaxWorkingSetSize": "forge_recommended_max_working_size",
+    "supportsFamily": "forge_supports_family"
+}
+
+
+# ******************* METAL GPU FAMILY *******************
+METAL_GPU_FAMILY = {
+    1001: "apple1",  # A7
+    1002: "apple2",  # A8
+    1003: "apple3",  # A9/A10
+    1004: "apple4",  # A11
+    1005: "apple5",  # A12
+    1006: "apple6",  # A13
+    1007: "apple7",  # A14/M1
+    1008: "apple8",  # A15/A16/M2
+    1009: "apple9",  # A17/M3/M4
 }
