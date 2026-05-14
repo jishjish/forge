@@ -9,7 +9,6 @@ from .device.device import Device
 from .helpers import DEBUG
 
 load_dotenv()
-ENV = os.getenv("APP_SETTINGS", "testing")
 
 class Forge:
     _gpu_models = [c[1] for c in inspect.getmembers(_models, inspect.isclass) if c[0] != 'BaseModel']
@@ -30,7 +29,7 @@ class Forge:
 
     def _device_info(self):
         # returns corresponding pydantic GPU model; (Forge --> Device --> get_device_info() --> gpu ops)
-        if ENV == 'production': 
+        if os.getenv("APP_SETTINGS", "testing") == "production":
             gpu_info = self.device.get_device_info()
             assert isinstance(gpu_info, tuple(self._gpu_models)), f"Unsupported GPU: {type(gpu_info).__name__}. Supported: {[c.__name__ for c in self._gpu_models]}"
             self.gpu_info = gpu_info
@@ -46,8 +45,8 @@ class Forge:
             f"{op} not found. Supported ops: {self._portfolio_ops + self._linalg_ops}"
 
         # import bases on provided op; either through `portfolio` or `linalg`
-        if op in self._portfolio_ops: import_path = f"src.forge.codegen.portfolio.op_{op}"
-        else: import_path = f"src.forge.codegen.linalg.op_{op}"
+        if op in self._portfolio_ops: import_path = f"forge.codegen.portfolio.op_{op}"
+        else: import_path = f"forge.codegen.linalg.op_{op}"
         if DEBUG >= 1:
             print(f"[dim]forge ({Path(__file__).name})[/dim] | Import path: {import_path} for {op} operation")
             print(f"[dim]forge ({Path(__file__).name})[/dim] | Kwargs: {kwargs}")
@@ -58,8 +57,8 @@ class Forge:
 
 if __name__ == "__main__":
     f = Forge()
-    # print(f._device_info()) 
+    print(f._device_info()) 
     # print(f._gpu_models)
     # print(f.run('matmul'))
-    print(f.supported_ops())
+    # print(f.supported_ops())
     # print(DEBUG)
