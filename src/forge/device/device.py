@@ -36,7 +36,7 @@ class Device:
         try: 
             # access file from ops if it matches the device type input
             _ops_file = [file for file in (Path(__file__).parent.parent/"ops").iterdir() if file.stem.startswith("ops_") and file.stem[len("ops_"):].upper() == self.device_type.upper()]
-            module = importlib.import_module(f"src.forge.ops.{_ops_file[0].stem}")
+            module = importlib.import_module(f"forge.ops.{_ops_file[0].stem}")
             cls = getattr(module, f"_{self.device_type.capitalize()}Ops")
             req = cls()
             if DEBUG >= 1: 
