@@ -40,3 +40,6 @@ Find last 5 completed tasks
         + ops/ops_metal.py
         + create extern c++ function instantiating Metal
         + `_MetalOps` class in `src/forge/ops/ops_metal.py`
+
+## 2026-05-14
+    metal kernel for log returns
