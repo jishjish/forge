@@ -27,7 +27,7 @@ def test_run_portfolio_op(monkeypatch):
     with patch("forge.forge.importlib.import_module") as mock_import:
         mock_import.return_value = MagicMock()
         f.run("matmul") 
-        mock_import.assert_called_with("forge.codegen.portfolio.op_matmul")
+        mock_import.assert_called_with("forge.codegen.linalg.op_matmul")
 
 def test_run_missing_module():
     f = Forge()
