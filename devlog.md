@@ -36,6 +36,7 @@ Find last 5 completed tasks
     * merge `device_info.py` helper functions into Device class
 
 ## 2026-05-06
-    add metal (apple silicon) support - reference instructions `src/forge/device/device.py`
-        ops/ops_metal.py
-        `_MetalOps` class in 
+    add metal (apple silicon) support - reference instructions `src/forge/device/support_checklist.md`
+        + ops/ops_metal.py
+        + create extern c++ function instantiating Metal
+        + `_MetalOps` class in `src/forge/ops/ops_metal.py`
