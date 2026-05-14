@@ -4,8 +4,8 @@ import importlib
 from rich import print
 from pathlib import Path
 from dotenv import load_dotenv
-import forge.models as _models
-from forge.device.device import Device
+import src.forge.models as _models
+from .device.device import Device
 from .helpers import DEBUG
 
 load_dotenv()
@@ -58,8 +58,8 @@ class Forge:
 
 if __name__ == "__main__":
     f = Forge()
-    f._device_info()
+    print(f._device_info()) 
     # print(f._gpu_models)
-    print(f.run('matmul'))
+    # print(f.run('matmul'))
     # print(f.supported_ops())
     # print(DEBUG)
