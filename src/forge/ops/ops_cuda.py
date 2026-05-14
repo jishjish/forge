@@ -1,4 +1,5 @@
 import ctypes
+from rich import print
 from pathlib import Path
 from ..helpers import DEBUG
 from forge.models import NvidiaGPU
@@ -37,11 +38,8 @@ class _NvidiaOps:
             print(f"[dim]forge ({Path(__file__).name})[/dim] | CUDA Specs: {attributes}")
         return NvidiaGPU(version=version.value, **attributes)
 
-
-
 if __name__ == "__main__":
     # c = _NvidiaOps()
     # c._device_info()
     for val in CUDA_ATTRIBUTES:
         print(val)
-
