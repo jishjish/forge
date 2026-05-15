@@ -56,3 +56,7 @@ uv pip install -r requirements.txt
 In order to interface with Apple silicon, you must follow the install instructions [here](https://developer.apple.com/metal/cpp/). Currently, Forge is built on the `metal-cpp_26.4.zip` file. Once
 you unzip the file inside of `third_party/` you must run `build_metal.sh` from project root to compile the metal shim. This generates the `.dylib` that Python loads and will then connect through
 the `third_party/metal_shim.cpp` file.
+
+> [!IMPORTANT]
+If working on Mac (metal), you must run `sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer` to set the Active Developer Directory on your device. If you want to only allow for a single session, run 
+`export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"`
