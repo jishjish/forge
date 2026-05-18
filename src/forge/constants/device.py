@@ -15,6 +15,11 @@ CHIPS = {
     "Metal": ("third_party/build/libforge_metal.dylib", "forge_get_device")
 }
 
+COMPILE_COMMANDS = {
+    "Metal": ["xcrun", "-sdk", "macosx", "metal", "-c", "{src}", "-o", "{out}"],
+    "CUDA": ["nvcc", "-arch={arch}", "-o", "{out}", "{src}"],
+}
+
 
 # ******************* CUDA ATTRIBUTES *******************
 CUDA_ATTRIBUTES = {
