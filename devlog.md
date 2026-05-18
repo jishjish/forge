@@ -42,4 +42,7 @@ Find last 5 completed tasks
         + `_MetalOps` class in `src/forge/ops/ops_metal.py`
 
 ## 2026-05-14
-    metal kernel for log returns
+    + metal kernel for log returns
+    _<device>Compile class for metal
+    _<device>Compile class for cuda
+    _<device>Compile class for amd
