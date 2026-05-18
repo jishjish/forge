@@ -43,7 +43,6 @@ class Device:
                 print(f"[dim]forge ({Path(__file__).name})[/dim] | ops file: {_ops_file}")
                 print(f"[dim]forge ({Path(__file__).name})[/dim] | importing module: {module}")
                 print(f"[dim]forge ({Path(__file__).name})[/dim] | cls: {cls}")
-
             return req._device_info()
         except FileNotFoundError:
             raise RuntimeError(f"No file found for device: {self.device_type}.")
@@ -56,11 +55,9 @@ class Device:
 
 if __name__ == "__main__":
     d = Device()
-    # print(f"Device type: {d.device_type}")
-    d.get_device_info()
+    print(f"Device type: {d.device_type}")
+    # d.get_device_info()
     # print(d.supported_devices)
-
-    
 
     """ future methods for consideration """
     #     def _get_optimal_block_size(self, op, matrix_dim):
