@@ -48,6 +48,31 @@ class _MetalOps:
         return MetalGPU(**attributes)
             
 
+class _MetalCompile:
+    def __init__(self):
+        # ffi through c++
+        self.lib = ctypes.CDLL(CHIPS.get("Metal")[0])
+        try:
+            # set the result types for the c++ shim calls
+            self.lib.forge_get_device.restype = ctypes.c_void_p
+            self.device = self.lib.forge_get_device()
+        except Exception as e: raise RuntimeError(f"Error initializing Metal: {e}")
+    
+    def _compile(self, source_code, function_name):
+        fn = getattr(self.lib, "forge_compile_source")
+        fn.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
+        fn.restype = ctypes.c_void_p
+        result = fn(self.device, source_code.encode("utf-8"), function_name.encode("utf-8"))
+        
+        pipe_fn = getattr(self.lib, "forge_generate_pipeline")
+        pipe_fn.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+        pipe_fn.restype = ctypes.c_void_p
+
+        # pipeline result returns void, have to unwrap
+        pipe_result = ctypes.c_void_p(pipe_fn(self.device, ctypes.c_void_p(result)))
+        return pipe_result.value
+    
+
 if __name__ == "__main__":
     c = _MetalOps()
     c._device_info()
