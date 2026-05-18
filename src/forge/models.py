@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 
 class NvidiaGPU(BaseModel):
+    device_type: str = "CUDA"
+    file_ext: str = ".cu"
     version: int = 0
     arch: str = "sm_75"                    # f string "fm_{major}{minor}" to be used for compiler reference
     max_threads_per_block: int = 1_024
@@ -13,6 +15,19 @@ class NvidiaGPU(BaseModel):
     warp_size: int = 32
     sm_count: int = 40
     max_threads_per_sm: int = 1_024
+
+
+class MetalGPU(BaseModel):
+    device_type: str = "Metal"
+    file_ext: str = ".metal"
+    name: str = "unknown"
+    maxThreadgroupMemoryLength: int = 0
+    maxThreadsPerThreadgroupX: int = 0
+    maxThreadsPerThreadgroupY: int = 0
+    maxThreadsPerThreadgroupZ: int = 0
+    recommendedMaxWorkingSetSize: int = 0
+    supportsFamily: str = "unknown"
+
 
 # TODO: update for amd specs
 class AmdGPU(BaseModel):
@@ -28,14 +43,3 @@ class AmdGPU(BaseModel):
     warp_size: int
     sm_count: int
     max_threads_per_sm: int
-
-
-class MetalGPU(BaseModel):
-    name: str = "unknown"
-    maxThreadgroupMemoryLength: int = 0
-    maxThreadsPerThreadgroupX: int = 0
-    maxThreadsPerThreadgroupY: int = 0
-    maxThreadsPerThreadgroupZ: int = 0
-    recommendedMaxWorkingSetSize: int = 0
-    supportsFamily: str = "unknown"
-
