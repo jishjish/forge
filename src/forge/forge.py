@@ -1,12 +1,12 @@
 import os
 import inspect
-import importlib
 from rich import print
 from pathlib import Path
 from dotenv import load_dotenv
 import forge.models as _models
 from .device.device import Device
 from .helpers import DEBUG
+from forge.codegen.compile import Compile
 
 load_dotenv()
 
@@ -29,7 +29,7 @@ class Forge:
     def supported_ops(cls): return {"portfolio_ops": cls._portfolio_ops, "linalg_ops": cls._linalg_ops}
 
     def _device_info(self):
-        # returns corresponding pydantic GPU model; (Forge --> Device --> get_device_info() --> gpu ops)
+        """ returns corresponding pydantic GPU model; (Forge --> Device --> get_device_info() --> gpu ops)"""
         if os.getenv("APP_SETTINGS", "testing") == "production":
             gpu_info = self.device.get_device_info()
             assert isinstance(gpu_info, tuple(self._gpu_models)), f"Unsupported GPU: {type(gpu_info).__name__}. Supported: {[c.__name__ for c in self._gpu_models]}"
@@ -48,15 +48,16 @@ class Forge:
         if DEBUG >= 1:
             print(f"[dim]forge ({Path(__file__).name})[/dim] | Import path: {import_path} for {op} operation")
             print(f"[dim]forge ({Path(__file__).name})[/dim] | Kwargs: {kwargs}")
-        try: ops = importlib.import_module(import_path)
-        except ModuleNotFoundError: raise RuntimeError(f"Op module not found: {import_path}")
-       
+        # start handling of compilations
+        assert self.gpu_info is not None, "Device not initialized"
+        comp = Compile(self.gpu_info, import_path, op)
+        comp.generate() 
 
 if __name__ == "__main__":
     f = Forge()
     # print(f._device_info()) 
     # print(f._gpu_models)
-    print(f.gpu_info)
-    print(f.run("matmul"))
+    # print(f.gpu_info)
+    print(f.run("log_returns"))
     # print(f.supported_ops())
     # print(DEBUG)
