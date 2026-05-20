@@ -1,15 +1,9 @@
 # from .memory import unified_memory
-# import forge.models as _models
-# import ctypes
-# import tempfile
-# import traceback
 import importlib
-# import subprocess
 from rich import print
 from pathlib import Path
 from pydantic import BaseModel
 from forge.helpers import DEBUG
-
 from ..constants.device import CHIPS, METAL_ATTRIBUTES, METAL_GPU_FAMILY
 
 class Compile:
@@ -32,10 +26,11 @@ class Compile:
         op_cls = getattr(op_module, f"generate_{self.gpu.device_type.lower()}")
         return op_cls(self.gpu, **kwargs)
 
-    def _compile(self, source_code):
+    def dispatch(self, source_code):
         _ops_file = [file for file in (Path(__file__).parent.parent/"ops").iterdir() if file.stem.startswith("ops_") and file.stem[len("ops_"):].upper() == self.gpu.device_type.upper()]
         module = importlib.import_module(f"forge.ops.{_ops_file[0].stem}")
         cls = getattr(module, f"_{self.gpu.device_type.capitalize()}Compile")
+        print(f"cls: {cls}")
         req = cls()
         req._compile(source_code, self.op_name)
         if DEBUG >= 1: 
@@ -49,7 +44,7 @@ class Compile:
     def generate(self):
         source_code = self._build_kernel() + self._build_ops() + "\n}"
         # Path(self.output_path).write_text(source_code)
-        self._compile(source_code)
+        self.dispatch(source_code)
         if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] | Updated source code and wrote to: {self.output_path}")
 
 if __name__ == "__main__":
