@@ -40,16 +40,25 @@ CUDA_ATTRIBUTES = {
 
 
 # ******************* METAL ATTRIBUTES *******************
-METAL_ATTRIBUTES = {
-    "name": "forge_device_name", 
-    "maxThreadgroupMemoryLength": "forge_max_threadgroup_memory", 
-    "maxThreadsPerThreadgroupX": "forge_max_threads_per_group_x",
-    "maxThreadsPerThreadgroupY": "forge_max_threads_per_group_y",
-    "maxThreadsPerThreadgroupZ": "forge_max_threads_per_group_z",
-    "recommendedMaxWorkingSetSize": "forge_recommended_max_working_size",
-    "supportsFamily": "forge_supports_family"
-}
+# METAL_ATTRIBUTES = {
+#     "name": {"forge_device_name", "ctypes.c_char_p"}, 
+#     "maxThreadgroupMemoryLength": {"forge_max_threadgroup_memory", "ctypes.c_int"}, 
+#     "maxThreadsPerThreadgroupX": {"forge_max_threads_per_group_x", "ctypes.c_int"},
+#     "maxThreadsPerThreadgroupY": "forge_max_threads_per_group_y", "ctypes.c_int"},
+#     "maxThreadsPerThreadgroupZ": {"forge_max_threads_per_group_z", "ctypes.c_int"},
+#     "recommendedMaxWorkingSetSize": {"forge_recommended_max_working_size", "ctypes.c_unit64"},
+#     "supportsFamily": {"forge_supports_family", "ctypes.c_char_p"}
+# }
 
+METAL_ATTRIBUTES = {
+    "name":                        ("forge_device_name",                  "c_char_p"),
+    "maxThreadgroupMemoryLength":  ("forge_max_threadgroup_memory",       "c_uint64"),
+    "maxThreadsPerThreadgroupX":   ("forge_max_threads_per_group_x",      "c_uint64"),
+    "maxThreadsPerThreadgroupY":   ("forge_max_threads_per_group_y",      "c_uint64"),
+    "maxThreadsPerThreadgroupZ":   ("forge_max_threads_per_group_z",      "c_uint64"),
+    "recommendedMaxWorkingSetSize":("forge_recommended_max_working_size", "c_uint64"),
+    "supportsFamily":              ("forge_supports_family",              "c_uint64"),
+}
 
 # ******************* METAL GPU FAMILY *******************
 METAL_GPU_FAMILY = {
