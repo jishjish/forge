@@ -45,7 +45,7 @@ Find last 5 completed tasks
     + metal kernel for log returns
     + _<device>Compile class for metal
     _<device>Compile class for cuda
-    _<device>Compile class for amd
+    - _<device>Compile class for amd
 
 ## 2026-05-21
     + data handling inputs in run() in forge
