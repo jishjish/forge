@@ -43,6 +43,13 @@ Find last 5 completed tasks
 
 ## 2026-05-14
     + metal kernel for log returns
-    _<device>Compile class for metal
+    + _<device>Compile class for metal
     _<device>Compile class for cuda
     _<device>Compile class for amd
+
+## 2026-05-21
+    + data handling inputs in run() in forge
+    + benchmarks
+
+## 2026-05-25
+    fusion operations benchmarks
