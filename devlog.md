@@ -52,4 +52,5 @@ Find last 5 completed tasks
     + benchmarks
 
 ## 2026-05-25
+    fusion operations (log returns --> correlations, log returns --> std dev, etc)
     fusion operations benchmarks
