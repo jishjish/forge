@@ -19,8 +19,6 @@ class Forge:
         self.device = Device()
         self.gpu_info = None
         self._device_info()
-        # self.graph = GraphBuilder(self.ast)
-        # self.codegen = CUDACodegen(self.graph)
 
     @classmethod
     def supported_gpus(cls): return [m.__name__ for m in cls._gpu_models]
@@ -40,8 +38,7 @@ class Forge:
             if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] | [white]env set to testing, returning base NVIDIA model[/white]")
     
     def run(self, op: str, realize: bool = True, **kwargs):
-        assert op in self._portfolio_ops or op in self._linalg_ops, \
-            f"{op} not found. Supported ops: {self._portfolio_ops + self._linalg_ops}"
+        assert op in self._portfolio_ops or op in self._linalg_ops, f"{op} not found. Supported ops: {self._portfolio_ops + self._linalg_ops}"
         # import bases on provided op; either through `portfolio` or `linalg`
         if op in self._portfolio_ops: import_path = f"forge.codegen.portfolio.op_{op}"
         else: import_path = f"forge.codegen.linalg.op_{op}"
