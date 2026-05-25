@@ -1,11 +1,12 @@
 import os
 import inspect
+import numpy as np
 from rich import print
 from pathlib import Path
-from dotenv import load_dotenv
-import forge.models as _models
-from .device.device import Device
 from .helpers import DEBUG
+import forge.models as _models
+from dotenv import load_dotenv
+from .device.device import Device
 from forge.codegen.compile import Compile
 
 load_dotenv()
@@ -51,13 +52,13 @@ class Forge:
         # start handling of compilations
         assert self.gpu_info is not None, "Device not initialized"
         comp = Compile(self.gpu_info, import_path, op)
-        comp.generate() 
+        comp.generate(**kwargs) 
 
 if __name__ == "__main__":
     f = Forge()
     # print(f._device_info()) 
     # print(f._gpu_models)
     # print(f.gpu_info)
-    print(f.run("log_returns"))
+    data = np.random.uniform(100, 500, size=500_000).astype(np.float32)
+    f.run("log_returns", data=data)
     # print(f.supported_ops())
-    # print(DEBUG)
