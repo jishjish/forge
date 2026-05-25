@@ -6,9 +6,13 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "importlib>=1.0.4",
+    "numpy>=2.4.6",
+    "pandas>=3.0.3",
+    "polars>=1.40.1",
     "pydantic>=2.13.3",
     "python-dotenv>=1.2.2",
     "rich>=15.0.0",
+    "tqdm>=4.67.3",
 ]
 
 [dependency-groups]
