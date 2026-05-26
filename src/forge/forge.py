@@ -52,5 +52,6 @@ class Forge:
 
 if __name__ == "__main__":
     f = Forge()
-    data = np.random.uniform(100, 500, size=500_000).astype(np.float32)
-    f.run("log_returns", data=data)
+    # data = np.random.uniform(100, 500, size=500_000).astype(np.float32)
+    # f.run("log_returns", data=data)
+    f.supported_gpus()
