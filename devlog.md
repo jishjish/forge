@@ -52,5 +52,8 @@ Find last 5 completed tasks
     + benchmarks
 
 ## 2026-05-25
-    fusion operations (log returns --> correlations, log returns --> std dev, etc)
+    * realize boolean to print out results from forge --> compile --> metal ops
+    fusion operations (correlation: log returns --> mean --> dot --> normalize)
     fusion operations benchmarks
+    (tbd in forge class) self.graph = GraphBuilder(self.ast)
+    (tbd in forge class) self.codegen = CUDACodegen(self.graph)
