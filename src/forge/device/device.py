@@ -55,8 +55,8 @@ class Device:
 
 if __name__ == "__main__":
     d = Device()
-    print(f"Device type: {d.device_type}")
-    # d.get_device_info()
+    # print(f"Device type: {d.device_type}")
+    print(d.get_device_info())
     # print(d.supported_devices)
 
     """ future methods for consideration """
