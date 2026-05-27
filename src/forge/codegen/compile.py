@@ -1,56 +1,80 @@
-# from .memory import unified_memory
 import importlib
+import numpy as np
+import polars as pl
+import pandas as pd
 from rich import print
 from pathlib import Path
 from pydantic import BaseModel
 from forge.helpers import DEBUG
-from ..constants.device import CHIPS, METAL_ATTRIBUTES, METAL_GPU_FAMILY
+from utils import available_portfolio_ops, available_linalg_ops, get_op_import_path
 
 class Compile:
-    def __init__(self, gpu: BaseModel, import_path: str, op_name):
+    _portfolio_ops = available_portfolio_ops()
+    _linalg_ops = available_linalg_ops()
+
+    def __init__(self, gpu: BaseModel, import_path: str, op_name: str, decomp_pipeline: list[str]):
         self.gpu = gpu
         self.import_path = import_path
         self.op_name = op_name
+        self.decomp_pipeline = decomp_pipeline
         self.output_path = Path(__file__).resolve().parent / "source_code" / f"{op_name}{self.gpu.file_ext}"
         if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] | GPU: {self.gpu.device_type}, op: {self.import_path}, out: {self.output_path}")
 
-    def _build_kernel(self, **kwargs) -> str:
+    def _build_source(self, op_name: str, **kwargs):
         try: kernel_module = importlib.import_module("forge.codegen.kernel")
         except ModuleNotFoundError: raise RuntimeError(f"Kernel module not found: {self.import_path}")
-        kernel_cls = getattr(kernel_module, f"generate_{self.gpu.device_type.lower()}_kernel")
-        return kernel_cls(**kwargs)
+        kernel_cls = getattr(kernel_module, f"generate_{self.gpu.device_type.lower()}_{op_name}_kernel")
+        kernel = kernel_cls(**kwargs)
 
-    def _build_ops(self, **kwargs) -> str:
-        try: op_module = importlib.import_module(self.import_path)
-        except ModuleNotFoundError: raise RuntimeError(f"Op module not found: {self.import_path}")
+        op_import_path = get_op_import_path(op_name)
+        try: op_module = importlib.import_module(op_import_path)
+        except ModuleNotFoundError: raise RuntimeError(f"Op module not found: {op_import_path}")
         op_cls = getattr(op_module, f"generate_{self.gpu.device_type.lower()}")
-        return op_cls(self.gpu, **kwargs)
+        ops = op_cls(self.gpu, **kwargs)
+        return kernel + ops + "\n}"
 
-    def dispatch(self, source_code):
+    def dispatch(self, source_code, func_name, data, realize):
         _ops_file = [file for file in (Path(__file__).parent.parent/"ops").iterdir() if file.stem.startswith("ops_") and file.stem[len("ops_"):].upper() == self.gpu.device_type.upper()]
         module = importlib.import_module(f"forge.ops.{_ops_file[0].stem}")
         cls = getattr(module, f"_{self.gpu.device_type.capitalize()}Compile")
-        print(f"cls: {cls}")
         req = cls()
-        req._compile(source_code, self.op_name)
         if DEBUG >= 1: 
             print(f"[dim]forge ({Path(__file__).name})[/dim] | ops file: {_ops_file}")
             print(f"[dim]forge ({Path(__file__).name})[/dim] | importing module: {module}")
             print(f"[dim]forge ({Path(__file__).name})[/dim] | cls: {cls}")
+        return req._compile(source_code, func_name, self.gpu, data, realize)     # call compilation file from corresponding device
 
     def _handle_data(self, gpu: BaseModel, data):
-        pass
+        match type(data):
+            case np.ndarray: np_data = data.astype(np.float32)
+            case pd.Series | pd.DataFrame: np_data = data.to_numpy(dtype=np.float32)
+            case pl.Series | pl.DataFrame: np_data = data.to_numpy().astype(np.float32, copy=False)
+            case _ : return "Unsupported data structure type"
+        entries = np_data.shape[0]
+        assets = np_data.shape[1] if np_data.ndim > 1 else 1
+        assert np_data.size % assets == 0, "Improper data dimensions, lengths vary by asset."
+        return np_data, {"entries": entries, "assets": assets, "stride": entries}
 
-    def generate(self):
-        source_code = self._build_kernel() + self._build_ops() + "\n}"
-        # Path(self.output_path).write_text(source_code)
-        self.dispatch(source_code)
+    def generate(self, data, realize):
+        ops = [v['op'] for v in self.decomp_pipeline]
+        state = {}
+        source_code = ""
+        cleaned_data = self._handle_data(self.gpu, data)
+        data_dim = cleaned_data[1]
+        for i, step in enumerate(ops):
+            if step not in state:
+                source_code += self._build_source(op_name=step, **data_dim)
+                input_data = self.decomp_pipeline[i]['input']
+
+                if input_data is None:
+                    res = self.dispatch(source_code, step, cleaned_data[0], realize)
+                else:
+                    res = self.dispatch(source_code, step, state[input_data], realize)
+
+                res = res.reshape(data_dim['assets'], data_dim['entries'])
+                state[step] = res
+        print(f"state: {state}")
         if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] | Updated source code and wrote to: {self.output_path}")
 
 if __name__ == "__main__":
-    # c = Compile()
-    # print(c.compile_square_matmul(N=1024, gpu=_models.NvidiaGPU))
-    # print(c._gpu_models)
-    # script_dir = Path(__file__).resolve().parent / "source_code"
-    # print(script_dir)
     pass
