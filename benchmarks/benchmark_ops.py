@@ -5,7 +5,7 @@ import time
 import numpy as np
 from pathlib import Path
 from dotenv import load_dotenv
-from src.forge.forge import Forge
+from forge.forge import Forge
 from datetime import datetime, timezone
 
 load_dotenv()
