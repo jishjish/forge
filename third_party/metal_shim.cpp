@@ -21,7 +21,20 @@ future function additions
     - MTLSizeMake(arrayLength, 1, 1) - decide how many threads to create / how to organize.
 
 */
+
+
+
+
 extern "C" {
+
+    struct KernelSpecs {
+        int maxThreadgroupMemoryLength;
+        int maxThreadsPerThreadgroupX;
+        int maxThreadsPerThreadgroupY;
+        int maxThreadsPerThreadgroupZ;
+        int recommendedMaxWorkingSetSize;
+    };
+
     void* forge_get_device()
     {
         MTL::Device* device = MTL::CreateSystemDefaultDevice();
@@ -73,6 +86,10 @@ extern "C" {
 
     MTL::Function* forge_compile_source(void* device, const char* source_code, const char* function_name)
     {
+        /*
+            Compiles MSL (Metal Shading Language) into a MTLLibrary and 
+            extracts a specific MTLFunction from it.
+        */
         if (!device) { std::cerr << "No device present\n"; return nullptr;}
         NS::String* src = NS::String::string(source_code, NS::StringEncoding::UTF8StringEncoding);
         NS::Error* error = nullptr;
@@ -96,10 +113,105 @@ extern "C" {
 
     MTL::ComputePipelineState* forge_generate_pipeline(void* device, void* func)
     {
+        /*
+            Returns MTLPipelineState* handle (memory address) for encoder dispatch.
+            This is the compiled GPU program ready to dispatch. 
+        */
         NS::Error* pipeline_error = nullptr;
         MTL::ComputePipelineState* pipeline = ((MTL::Device*)device)->newComputePipelineState((MTL::Function*)func, &pipeline_error);
         if (!pipeline) { std::cerr << "Failed to generate pipeline";}
         return pipeline;
+    }
+
+
+    void* forge_allocate_input_buffer(void* device, void* data_ptr, int byte_length)
+    {
+        /*
+            Allocate an input buffer for dispatch.
+        */
+        return ((MTL::Device*)device)->newBuffer(data_ptr, byte_length, MTL::ResourceStorageModeShared);
+    }
+
+    void* forge_allocate_output_buffer(void* device, int byte_length)
+    {
+        /*
+            Allocate an empty output buffer for dispatch.
+        */
+        return ((MTL::Device*)device)->newBuffer(byte_length, MTL::ResourceStorageModeShared);
+    }
+
+    // void* forge_allocate_constant_buffer(void* device, int data_length)
+    // {
+    //     return ((MTL::Device*)device)->newBuffer(data_length, MTL::ResourceStorageModeShared);
+    // }
+
+
+    void* forge_allocate_constant_buffer(void* device, int data_length)
+    {
+        MTL::Buffer* buf = ((MTL::Device*)device)->newBuffer(
+            sizeof(int), 
+            MTL::ResourceStorageModeShared
+        );
+        memcpy(buf->contents(), &data_length, sizeof(int));
+        return buf;
+    }
+
+    void* forge_read_output_buf(void* out_buf, int data_length)
+    {
+        /*
+        Read the output buffer produced from the dispatch pipeline.
+        */
+
+        MTL::Buffer* buf = (MTL::Buffer*)out_buf;
+        float* data = (float*)buf->contents();
+
+        // uncomment to stream results
+        // for (int i = 0; i < data_length; i++) {
+        //     std::cout << data[i] << "\n" ;
+        // }
+        return data;
+    }
+
+    void* forge_dispatch_pipeline(
+        void* device, 
+        void* pipeline, 
+        KernelSpecs* kernel_specs, 
+        int data_length, 
+        void* data_ptr,
+        int byte_length
+    )
+    {
+        MTL::CommandQueue* queue = ((MTL::Device*)device)->newCommandQueue();
+        MTL::CommandBuffer* cmd_buf = queue->commandBuffer();
+        MTL::ComputeCommandEncoder* encoder = cmd_buf->computeCommandEncoder();
+        encoder->setComputePipelineState((MTL::ComputePipelineState*)pipeline);
+
+        // NS::UInteger threadgroup_size = MIN(kernel_specs->maxThreadsPerThreadgroupX, data_length);
+        NS::UInteger simd_width = ((MTL::ComputePipelineState*)pipeline)->threadExecutionWidth();
+        NS::UInteger max_threads = ((MTL::ComputePipelineState*)pipeline)->maxTotalThreadsPerThreadgroup();
+        NS::UInteger threadgroup_size = MIN((NS::UInteger)data_length, (max_threads / simd_width) * simd_width);
+        NS::UInteger grid_size = data_length;
+
+        MTL::Buffer* in_buf = (MTL::Buffer*)forge_allocate_input_buffer(device, data_ptr, byte_length);
+        MTL::Buffer* out_buf = (MTL::Buffer*)forge_allocate_output_buffer(device, byte_length);
+        MTL::Buffer* const_buf = (MTL::Buffer*)forge_allocate_constant_buffer(device, data_length);
+
+        encoder->setBuffer(in_buf, 0, 0);
+        encoder->setBuffer(out_buf, 0, 1);
+        encoder->setBuffer(const_buf, 0, 2);
+
+        encoder->dispatchThreads(
+            MTL::Size(grid_size, 1, 1),
+            MTL::Size(threadgroup_size, 1, 1)
+        );
+
+        encoder->endEncoding();
+        cmd_buf->commit();
+        cmd_buf->waitUntilCompleted();
+
+        float* out_debug = (float*)out_buf->contents();
+
+        return out_buf;
     }
 }
 
