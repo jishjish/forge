@@ -40,16 +40,7 @@ CUDA_ATTRIBUTES = {
 
 
 # ******************* METAL ATTRIBUTES *******************
-# METAL_ATTRIBUTES = {
-#     "name": {"forge_device_name", "ctypes.c_char_p"}, 
-#     "maxThreadgroupMemoryLength": {"forge_max_threadgroup_memory", "ctypes.c_int"}, 
-#     "maxThreadsPerThreadgroupX": {"forge_max_threads_per_group_x", "ctypes.c_int"},
-#     "maxThreadsPerThreadgroupY": "forge_max_threads_per_group_y", "ctypes.c_int"},
-#     "maxThreadsPerThreadgroupZ": {"forge_max_threads_per_group_z", "ctypes.c_int"},
-#     "recommendedMaxWorkingSetSize": {"forge_recommended_max_working_size", "ctypes.c_unit64"},
-#     "supportsFamily": {"forge_supports_family", "ctypes.c_char_p"}
-# }
-
+# Name: (shim function name, result type of shim function)
 METAL_ATTRIBUTES = {
     "name":                        ("forge_device_name",                  "c_char_p"),
     "maxThreadgroupMemoryLength":  ("forge_max_threadgroup_memory",       "c_uint64"),
