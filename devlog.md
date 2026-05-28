@@ -57,3 +57,6 @@ Find last 5 completed tasks
     fusion operations benchmarks
     (tbd in forge class) self.graph = GraphBuilder(self.ast)
     (tbd in forge class) self.codegen = CUDACodegen(self.graph)
+
+## 2026-05-27
+    * shapetracker for return shape on chained operations 
