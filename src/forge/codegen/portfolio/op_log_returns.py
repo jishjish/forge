@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 PIPELINE = [
-    {"op": "log_returns", "input": None}
+    {"op": "log_returns", "input": None, "type": "elementwise"}
 ]
 
 def generate_metal(gpu: BaseModel, **kwargs) -> str:
