@@ -1,15 +1,12 @@
 from pydantic import BaseModel
 
-# log returns
-# mean
-# dot product
-# normalization
-
 PIPELINE = [
-    {"op": "log_returns", "input": None},
-    {"op": "mean",        "input": "log_returns"},
-    {"op": "dot",         "input": "log_returns"},
-    {"op": "normalize",   "input": "dot"},
+    {"op": "log_returns", "input": None,                        "type": "elementwise"},
+    {"op": "mean",        "input": "log_returns",               "type": "reduction"},
+    {"op": "std_dev",     "input": ["log_returns", "mean"],     "type": "elementwise"},
+    {"op": "covariance",  "input": ["log_returns", "mean"],     "type": "reduction"},
+    {"op": "matmul",      "input": ["covariance", "std_dev"],   "type": "matmul"},
+    {"op": "normalize",   "input": "matmul",                    "type": "elementwise"},
 ]
 
 def generate_metal(gpu: BaseModel, **kwargs) -> str:
