@@ -122,6 +122,6 @@ def save_results(averages: dict, op: str):
 
 if __name__ == "__main__":
     averages, op = benchmark("log_returns")
+    # averages, op = benchmark("mean")
     print_summary(averages, op)
     if SAVE: save_results(averages, op)
-
