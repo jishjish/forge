@@ -6,7 +6,8 @@ from rich import print
 from pathlib import Path
 from pydantic import BaseModel
 from forge.helpers import DEBUG
-from utils import available_portfolio_ops, available_linalg_ops, get_op_import_path
+from utils import available_portfolio_ops, available_linalg_ops, get_op_import_path, extract_buffer_count_from_source
+from shapetracker.shapetracker import ShapeTracker
 
 class Compile:
     _portfolio_ops = available_portfolio_ops()
@@ -33,7 +34,7 @@ class Compile:
         ops = op_cls(self.gpu, **kwargs)
         return kernel + ops + "\n}"
 
-    def dispatch(self, source_code, func_name, data, realize):
+    def dispatch(self, source_code, func_name, data, input_buffer, spec_array, buffer_alloc_data, output_shape, realize):
         _ops_file = [file for file in (Path(__file__).parent.parent/"ops").iterdir() if file.stem.startswith("ops_") and file.stem[len("ops_"):].upper() == self.gpu.device_type.upper()]
         module = importlib.import_module(f"forge.ops.{_ops_file[0].stem}")
         cls = getattr(module, f"_{self.gpu.device_type.capitalize()}Compile")
@@ -42,7 +43,7 @@ class Compile:
             print(f"[dim]forge ({Path(__file__).name})[/dim] | ops file: {_ops_file}")
             print(f"[dim]forge ({Path(__file__).name})[/dim] | importing module: {module}")
             print(f"[dim]forge ({Path(__file__).name})[/dim] | cls: {cls}")
-        return req._compile(source_code, func_name, self.gpu, data, realize)     # call compilation file from corresponding device
+        return req._compile(source_code, func_name, self.gpu, data, input_buffer, spec_array, buffer_alloc_data, len(buffer_alloc_data), output_shape, realize)     # call compilation file from corresponding device
 
     def _handle_data(self, gpu: BaseModel, data):
         match type(data):
@@ -55,26 +56,42 @@ class Compile:
         assert np_data.size % assets == 0, "Improper data dimensions, lengths vary by asset."
         return np_data, {"entries": entries, "assets": assets, "stride": entries}
 
-    def generate(self, data, realize):
+    def generate(self, data, realize: bool = False):
         ops = [v['op'] for v in self.decomp_pipeline]
         state = {}
         source_code = ""
         cleaned_data = self._handle_data(self.gpu, data)
         data_dim = cleaned_data[1]
+        entries_int = int(data_dim["entries"])
+        assets_int = int(data_dim["assets"])
+        spec_array = np.empty((assets_int, entries_int), dtype=np.float32)
+        shp = ShapeTracker(data_dim=data_dim, pipeline=self.decomp_pipeline)
+        output_shape = shp.calculate_output_shape()
+
         for i, step in enumerate(ops):
             if step not in state:
-                source_code += self._build_source(op_name=step, **data_dim)
+                step_source = self._build_source(op_name=step, **data_dim)
+                source_code += step_source
+                buffer_alloc_data = extract_buffer_count_from_source(step_source)
+
                 input_data = self.decomp_pipeline[i]['input']
+                # realize if True and last operation
+                step_realize = realize and (step == ops[-1])
 
-                if input_data is None:
-                    res = self.dispatch(source_code, step, cleaned_data[0], realize)
+                # check if first run, pass clean data, otherwise state data
+                if input_data is None: 
+                    res = self.dispatch(source_code, step, cleaned_data[0], None, spec_array, buffer_alloc_data, output_shape, step_realize)
+                else: 
+                    res = self.dispatch(source_code, step, None, state[input_data], spec_array, buffer_alloc_data, output_shape, step_realize)
+
+                if step_realize: 
+                    reshaped_res = res.reshape(output_shape)
+                    state[step] = reshaped_res
                 else:
-                    res = self.dispatch(source_code, step, state[input_data], realize)
-
-                res = res.reshape(data_dim['assets'], data_dim['entries'])
-                state[step] = res
-        print(f"state: {state}")
+                    state[step] = res
+        # print(f"state: {state}")
         if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] | Updated source code and wrote to: {self.output_path}")
+        return state, spec_array.size, output_shape
 
 if __name__ == "__main__":
     pass
