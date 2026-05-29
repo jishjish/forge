@@ -35,6 +35,12 @@ extern "C" {
         int recommendedMaxWorkingSetSize;
     };
 
+    struct BufferAllocationData {
+        int index;
+        char type[16];
+        char name[32];
+    };
+
     void* forge_get_device()
     {
         MTL::Device* device = MTL::CreateSystemDefaultDevice();
@@ -140,12 +146,6 @@ extern "C" {
         return ((MTL::Device*)device)->newBuffer(byte_length, MTL::ResourceStorageModeShared);
     }
 
-    // void* forge_allocate_constant_buffer(void* device, int data_length)
-    // {
-    //     return ((MTL::Device*)device)->newBuffer(data_length, MTL::ResourceStorageModeShared);
-    // }
-
-
     void* forge_allocate_constant_buffer(void* device, int data_length)
     {
         MTL::Buffer* buf = ((MTL::Device*)device)->newBuffer(
@@ -178,27 +178,45 @@ extern "C" {
         KernelSpecs* kernel_specs, 
         int data_length, 
         void* data_ptr,
+        void* in_buf_ptr,
+        BufferAllocationData* buffer_alloc_data,
+        int buffer_alloc_len,
         int byte_length
     )
     {
+        MTL::Buffer* in_buf;
+        if (in_buf_ptr)
+        {
+            in_buf = (MTL::Buffer*)in_buf_ptr;
+        } else {
+            in_buf = (MTL::Buffer*)forge_allocate_input_buffer(device, data_ptr, byte_length);
+        }
         MTL::CommandQueue* queue = ((MTL::Device*)device)->newCommandQueue();
         MTL::CommandBuffer* cmd_buf = queue->commandBuffer();
         MTL::ComputeCommandEncoder* encoder = cmd_buf->computeCommandEncoder();
         encoder->setComputePipelineState((MTL::ComputePipelineState*)pipeline);
 
-        // NS::UInteger threadgroup_size = MIN(kernel_specs->maxThreadsPerThreadgroupX, data_length);
         NS::UInteger simd_width = ((MTL::ComputePipelineState*)pipeline)->threadExecutionWidth();
         NS::UInteger max_threads = ((MTL::ComputePipelineState*)pipeline)->maxTotalThreadsPerThreadgroup();
         NS::UInteger threadgroup_size = MIN((NS::UInteger)data_length, (max_threads / simd_width) * simd_width);
         NS::UInteger grid_size = data_length;
 
-        MTL::Buffer* in_buf = (MTL::Buffer*)forge_allocate_input_buffer(device, data_ptr, byte_length);
-        MTL::Buffer* out_buf = (MTL::Buffer*)forge_allocate_output_buffer(device, byte_length);
-        MTL::Buffer* const_buf = (MTL::Buffer*)forge_allocate_constant_buffer(device, data_length);
+        MTL::Buffer* out_buf = nullptr;
+        for (int i = 0; i < buffer_alloc_len; i++){
+            int index = buffer_alloc_data[i].index;
+            const char* type = buffer_alloc_data[i].type;
+            MTL::Buffer* buf;
 
-        encoder->setBuffer(in_buf, 0, 0);
-        encoder->setBuffer(out_buf, 0, 1);
-        encoder->setBuffer(const_buf, 0, 2);
+            if (strcmp(type, "input") == 0){
+                buf = in_buf;
+            } else if (strcmp(type, "constant") == 0){
+                buf = (MTL::Buffer*)forge_allocate_constant_buffer(device, data_length);
+            } else if (strcmp(type, "output") == 0){
+                buf = (MTL::Buffer*)forge_allocate_output_buffer(device, data_length);
+                out_buf = buf;
+            } 
+            encoder->setBuffer(buf, 0, index);
+        }
 
         encoder->dispatchThreads(
             MTL::Size(grid_size, 1, 1),
@@ -210,7 +228,6 @@ extern "C" {
         cmd_buf->waitUntilCompleted();
 
         float* out_debug = (float*)out_buf->contents();
-
         return out_buf;
     }
 }
