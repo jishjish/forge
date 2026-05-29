@@ -24,3 +24,17 @@ def generate_metal_mean_kernel(**kwargs) -> str:
     ) {
     """
     return s
+
+def generate_metal_std_dev_kernel(**kwargs) -> str:
+    s = """
+    #include <metal_stdlib>
+    using namespace metal;
+    kernel void std_dev(
+        device const float* returns  [[buffer(0)]],
+        device float* averages       [[buffer(1)]],
+        device float* std_dev        [[buffer(2)]],
+        constant int& data_length    [[buffer(3)]],
+        uint id                      [[thread_position_in_grid]]
+    ) {
+    """
+    return s
