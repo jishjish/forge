@@ -58,10 +58,8 @@ class Forge:
         return handle
     
     def realize(self, handle):
-        data_ptr_dict = self._results[handle]["data_ptr"]
-        data_ptr = list(data_ptr_dict.values())[-1]
+        data_ptr = self._results[handle]["data_ptr"]
         output_data_shape = self._results[handle]["output_data_shape"]
-
         # call realize() through ops to ffi
         _ops_file = [file for file in (Path(__file__).parent/"ops").iterdir() if file.stem.startswith("ops_") and file.stem[len("ops_"):].upper() == self.gpu_info.device_type.upper()]
         module = importlib.import_module(f"forge.ops.{_ops_file[0].stem}")
@@ -70,12 +68,11 @@ class Forge:
         return req.realize(data_ptr, output_data_shape)
        
 
-
 if __name__ == "__main__":
     f = Forge()
     import numpy as np
-    data=np.random.uniform(100, 500, size=(5, 5)).astype(np.float32)
+    data=np.random.uniform(100, 500, size=(5000, 3)).astype(np.float32)
     # a = f.run("log_returns", data = data, realize=False)
     test = f.run("mean", data = data, realize=False)
     # print(f.realize(a))
-    # print(f.realize(test))
+    print(f.realize(test))
