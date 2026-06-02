@@ -9,29 +9,35 @@ class ShapeTracker:
             op = step["op"]
             match op:
                 case "log_returns":
-                    shape = self.base_shape
+                    shape = (self.base_shape[0], self.base_shape[1] - 1)
+                    extract = "trim_last_col"
                 case "mean":
-                    rows, cols = self.shape_states["log_returns"]
+                    rows, cols = self.shape_states["log_returns"]["shape"]
                     shape = (rows, 1)
+                    extract = "first_col"
                 case "std_dev":
-                    rows, cols = self.shape_states["log_returns"]
+                    rows, cols = self.shape_states["log_returns"]["shape"]
                     shape = (rows, 1)
+                    extract = "first_col"
                 case "covariance":
-                    rows, cols = self.shape_states["log_returns"]
+                    rows, cols = self.shape_states["log_returns"]["shape"]
                     shape = (rows, rows)
+                    extract = "full"
                 case "matmul":
-                    cov_shape = self.shape_states["covariance"]
-                    std_dev_shape = self.shape_states["std_dev"]
+                    cov_shape = self.shape_states["covariance"]["shape"]
+                    std_dev_shape = self.shape_states["std_dev"]["shape"]
                     m, k1 = cov_shape
                     k2, n = std_dev_shape
                     assert k1 == k2
                     shape = (m, n)
+                    extract = "matrix"
                 case "normalize":
-                    rows, cols = self.shape_states["covariance"]
+                    rows, cols = self.shape_states["covariance"]["shape"]
                     shape = (rows, rows)
+                    extract = "full"
                 case _:
                     return
-            self.shape_states[op] = shape
+            self.shape_states[op] = {"shape": shape, "extract": extract}
         return list(self.shape_states.values())[-1]
 
 if __name__ == "__main__":
@@ -45,6 +51,5 @@ if __name__ == "__main__":
     ]
     data_dim = {"entries": 3, "assets": 9, "stride": 3}
     s = ShapeTracker(PIPELINE, data_dim)
-
     print(s.calculate_output_shape())
     # s._validate()
