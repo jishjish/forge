@@ -113,7 +113,7 @@ class _MetalCompile:
             data_ptr = data  # already a void* from previous dispatch
 
         byte_length = spec_array.nbytes
-        data_length = spec_array.shape[1]  
+        data_length = spec_array.shape[0]   # reference entries shape (entries, assets)
 
         extracted_specs = [key for key in gpu.model_fields.keys() if key in [f[0] for f in KernelSpecs._fields_]]
         kernel_specs = KernelSpecs(**{k: getattr(gpu, k) for k in extracted_specs})
