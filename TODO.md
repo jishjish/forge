@@ -7,3 +7,4 @@
 - [ ] Test suite
 - [ ] Benchmarking
 - [ ] Confirm Shapetracker outputs
+- [ ] can_fuse and localize (make dynamic) in fuse
