@@ -11,7 +11,6 @@ def generate_metal(gpu: BaseModel, **kwargs) -> str:
     if (id == 0 || id >= data_length) return;
     for (int a = 0; a < {assets}; a++)
     {{
-        int offset = a * {stride};
-        returns[offset + id - 1] = log(prices[offset + id] / prices[offset + id - 1]);
+        returns[(id - 1) * {assets} + a] = log(prices[id * {assets} + a] / prices[(id - 1) * {assets} + a]);
     }}
     """

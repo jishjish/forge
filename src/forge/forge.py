@@ -1,88 +1,86 @@
-import os
+import uuid
 import importlib
 from rich import print
 from pathlib import Path
 from .helpers import DEBUG
-import forge.models as _models
-from dotenv import load_dotenv
 from .device.device import Device
 from forge.codegen.compile import Compile
-from utils import available_gpu_models, available_portfolio_ops, available_linalg_ops, get_op_import_path
-load_dotenv()
+from utils import available_gpu_models, available_portfolio_ops, available_linalg_ops, get_op_import_path 
 
 class Forge:
     _gpu_models = available_gpu_models()
-    _portfolio_ops = available_portfolio_ops()
-    _linalg_ops = available_linalg_ops()
+    _portfolio_ops, _linalg_ops = available_portfolio_ops(), available_linalg_ops()
 
     def __init__(self):
         self.device = Device()
         self.gpu_info = None
         self._device_info()
+        self._results = {}
 
     @classmethod
-    def supported_gpus(cls): print([m.__name__ for m in cls._gpu_models])
+    def supported_gpus(cls): return [m.__name__ for m in cls._gpu_models]
 
     @classmethod
-    def supported_ops(cls): print({"portfolio_ops": cls._portfolio_ops, "linalg_ops": cls._linalg_ops})
+    def supported_ops(cls): return {"portfolio_ops": cls._portfolio_ops, "linalg_ops": cls._linalg_ops}
 
     def _device_info(self):
         """ returns corresponding pydantic GPU model; (Forge --> Device --> get_device_info() --> gpu ops)"""
-        if os.getenv("APP_SETTINGS", "testing") == "production":
-            gpu_info = self.device.get_device_info()
-            assert isinstance(gpu_info, tuple(self._gpu_models)), f"Unsupported GPU: {type(gpu_info).__name__}. Supported: {[c.__name__ for c in self._gpu_models]}"
-            self.gpu_info = gpu_info
-            if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] | [dim]Device initialized:[/dim] {self.gpu_info}")
-        else: 
-            self.gpu_info = _models.NvidiaGPU()
-            if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] | [white]env set to testing, returning base NVIDIA model[/white]")
-    
-    def run(self, op: str, realize: bool = True, **kwargs):
+        gpu_info = self.device.get_device_info()
+        assert isinstance(gpu_info, tuple(self._gpu_models)), f"Unsupported GPU: {type(gpu_info).__name__}. Supported: {[c.__name__ for c in self._gpu_models]}"
+        self.gpu_info = gpu_info
+        if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] | [dim]Device initialized:[/dim] {self.gpu_info}")
+
+    def run(self, op: str, realize: bool = False, **kwargs):
         assert op in self._portfolio_ops or op in self._linalg_ops, f"{op} not found. Supported ops: {self._portfolio_ops + self._linalg_ops}"
         import_path = get_op_import_path(op) # import based on provided op (thru portfolio or linalg)
 
         try: decomp_pipeline = getattr(importlib.import_module(import_path), "PIPELINE")
         except ModuleNotFoundError: raise RuntimeError(f"Error retrieving decomposition pipeline: {import_path}")
-        if DEBUG >= 1:
-            print(f"[dim]forge ({Path(__file__).name})[/dim] | Data realization: {realize}")
-            print(f"[dim]forge ({Path(__file__).name})[/dim] | Import path: {import_path} for {op} operation")
-            print(f"[dim]forge ({Path(__file__).name})[/dim] | Kwargs: {kwargs}")
-        # start handling of compilations
+        if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] \n | Data realization: {realize} \n | Import path: {import_path} for {op} operation \n | Kwargs: {kwargs}")
+
         assert self.gpu_info is not None, "Device not initialized"
-        comp = Compile(self.gpu_info, import_path, op, decomp_pipeline)
-        comp.generate(realize=realize, **kwargs) 
+        data = kwargs.get("data", 1)
+        comp = Compile(self.gpu_info, op, decomp_pipeline, data)
+        state, data_length, buffer_shape, output_data_shape = comp.generate(realize=realize, **kwargs) 
+        handle = str(uuid.uuid4())
+        self._results[handle] = {"data_ptr": state, "data_length": data_length, "buffer_shape": buffer_shape, "output_data_shape": output_data_shape["shape"]}
+        return handle
+    
+    def realize(self, handle):
+        r = self._results[handle]
+        data_ptr, buffer_shape, output_data_shape = r["data_ptr"], r["buffer_shape"], r["output_data_shape"]
+        _ops_file = [file for file in (Path(__file__).parent/"ops").iterdir() if file.stem.startswith("ops_") and file.stem[len("ops_"):].upper() == self.gpu_info.device_type.upper()]
+        module = importlib.import_module(f"forge.ops.{_ops_file[0].stem}")
+        cls = getattr(module, f"_{self.gpu_info.device_type.capitalize()}Compile")
+        req = cls()
+        return req.realize(data_ptr, buffer_shape, output_data_shape)
+       
 
 if __name__ == "__main__":
-    f = Forge()
     import numpy as np
-    import pandas as pd
-    import polars as pl
 
-    # np.ndarray - single asset
-    # data = np.random.uniform(100, 500, size=50).astype(np.float32)
-    # f.run("mean", data = data, realize=True)
+    f = Forge()
+    # (entries, assets)
+    # data=np.random.uniform(100, 500, size=(15, 3)).astype(np.float32)
+    # (entries, assets) -- 4 timesteps, 2 assets
+    data = np.array([
+        [100.0, 100.0],
+        [110.0, 90.0],
+        [121.0, 81.0],
+        [133.1, 72.9],
+    ], dtype=np.float32)
 
-    # np.ndarray - multi asset
-    data=np.random.uniform(100, 500, size=(5, 5)).astype(np.float32)
-    # f.run("log_returns", data = data, realize=True)
-    f.run("mean", data = data, realize=True)
-# 
-#     # pd.Series - single asset
-#     data=pd.Series(np.random.uniform(100, 500, size=50), name="AAPL")
-#     f.run("mean", data = data, realize=False)
-# 
-#     # pd.DataFrame - multi asset
-#     data=pd.DataFrame(np.random.uniform(100, 500, size=(50, 5)), columns=["AAPL","GOOGL","MSFT","AMZN","TSLA"])
-#     f.run("mean", data = data, realize=False)
-# 
-#     # pl.Series - single asset
-#     data = pl.Series("AAPL", np.random.uniform(100, 500, size=50).astype(np.float32))
-#     f.run("mean", data = data, realize=False)
-# 
-#     # pl.DataFrame - multi asset
-#     data = pl.DataFrame({ticker: np.random.uniform(100, 500, size=50).astype(np.float32) 
-#                 for ticker in ["AAPL","GOOGL","MSFT","AMZN","TSLA"]})
-#     f.run("mean", data = data, realize=False)
-# 
+    # asset 0: steady +10% each period
+    # log returns: [0.0953, 0.0953, 0.0953]
+    #
+    # asset 1: steady -10% each period  
+    # log returns: [-0.1054, -0.1054, -0.1054]
+    #
+    # mean per timestep: (0.0953 + -0.1054) / 2 = -0.0050 for all 3
 
-    # f.run("mean", data = data, realize=False)
+    print('data is\n')
+    print(data)
+    a = f.run('mean', data=data)
+    fr = f.realize(a)
+    print('\noutput')
+    print(fr)

@@ -15,7 +15,7 @@ def generate_metal(gpu: BaseModel, **kwargs) -> str:
 
     for (int a = 0; a < {assets}; a++)
     {{
-        sum += returns[a * {stride} + id];
+        sum += returns[id * {assets} + a];
     }}
 
     float average = sum / count;

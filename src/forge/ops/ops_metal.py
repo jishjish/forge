@@ -3,7 +3,8 @@
 Apple provides c++ headers (not a system library). So rather than 
 accessing through `CHIPS.get('Metal'), this is invoked through 
 `third_party/metal_shim.cpp`. The metal shim file houses 
-corresponding functions needed to access device specs.
+corresponding functions needed to access device specs
+and generate / dispatch kernel functions.
 """
 import numpy as np
 import ctypes
@@ -20,6 +21,13 @@ class KernelSpecs(ctypes.Structure):
         ("maxThreadsPerThreadgroupY", ctypes.c_int),
         ("maxThreadsPerThreadgroupZ", ctypes.c_int),
         ("recommendedMaxWorkingSetSize", ctypes.c_int)
+    ]
+
+class BufferAllocationData(ctypes.Structure):
+    _fields_ = [
+        ("index", ctypes.c_int),
+        ("type", ctypes.c_char * 16),
+        ("name", ctypes.c_char * 32),
     ]
 
 class _MetalOps:
@@ -66,59 +74,84 @@ class _MetalCompile:
             self.lib.forge_get_device.restype = ctypes.c_void_p
             self.device = self.lib.forge_get_device()
         except Exception as e: raise RuntimeError(f"Error initializing Metal: {e}")
+        self._pipeline_cache = {}
     
     def _compile(
         self, 
-        source_code, 
-        function_name, 
-        gpu,
-        data,
-        realize
+        source_code: str, 
+        function_name: str, 
+        gpu,                            # pydantic gpu model
+        data: np.ndarray | int,
+        spec_array: np.ndarray, 
+        buffer_alloc_data,              # buffer allocation data from kernel
+        buffer_alloc_len,
+        output_shape,
+        realize: bool,
+        is_buffer: bool
     ):
-        # get function to compile source code
+        # get function to compile source code; set arg and return type for ffi
         fn = getattr(self.lib, "forge_compile_source")
-        # set arg and return types for ffi
         fn.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
         fn.restype = ctypes.c_void_p
         result = fn(self.device, source_code.encode("utf-8"), function_name.encode("utf-8"))
-        
-        # take lib and generate pipeline (follow similar arg/return types)
+        # take lib and generate pipeline
         pipe_fn = getattr(self.lib, "forge_generate_pipeline")
         pipe_fn.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
         pipe_fn.restype = ctypes.c_void_p
-
         # pipeline result returns void, have to unwrap `.value` (memory address)
-        pipe_result = ctypes.c_void_p(pipe_fn(self.device, ctypes.c_void_p(result))).value
+        if function_name not in self._pipeline_cache:
+            pipe_result = ctypes.c_void_p(pipe_fn(self.device, ctypes.c_void_p(result))).value
+            self._pipeline_cache[function_name] = pipe_result
+        else:
+            pipe_result = self._pipeline_cache[function_name]
 
+        # create dispatch pipeline
         dispatch_fn = getattr(self.lib, "forge_dispatch_pipeline") 
-        data_ptr = data.ctypes.data
-        byte_length = data.nbytes
+        if isinstance(data, np.ndarray):
+            data_ptr = data.ctypes.data
+        else:
+            data_ptr = data  # already a void* from previous dispatch
+
+        byte_length = spec_array.nbytes
+        data_length = spec_array.shape[0]   # reference entries shape (entries, assets)
 
         extracted_specs = [key for key in gpu.model_fields.keys() if key in [f[0] for f in KernelSpecs._fields_]]
         kernel_specs = KernelSpecs(**{k: getattr(gpu, k) for k in extracted_specs})
         dispatch_fn.argtypes = [
-            ctypes.c_void_p,                # device
-            ctypes.c_void_p,                # pipeline 
-            ctypes.POINTER(KernelSpecs),    # kernel_specs
-            ctypes.c_int,                   # data_length 
-            ctypes.c_void_p,                # data_ptr
-            ctypes.c_int                    # byte_length
+            ctypes.c_void_p,                        # device
+            ctypes.c_void_p,                        # pipeline 
+            ctypes.POINTER(KernelSpecs),            # kernel_specs
+            ctypes.c_int,                           # data_length 
+            ctypes.c_void_p,                        # data_ptr
+            ctypes.POINTER(BufferAllocationData),   # buffer allocation data
+            ctypes.c_int,                           # buffer allocation length
+            ctypes.c_int,                           # byte_length
+            ctypes.c_bool                           # buffer boolean
         ]
         dispatch_fn.restype = ctypes.c_void_p
-        dispatch_res = dispatch_fn(self.device, pipe_result, kernel_specs, len(data), data_ptr, byte_length)
+        buffer_alloc_array = (BufferAllocationData * buffer_alloc_len)() # expand buffer to pass entirety
+        for i, val in buffer_alloc_data.items():
+            buffer_alloc_array[i].index = val["index"]
+            buffer_alloc_array[i].type = val["type"].encode("utf-8")
+            buffer_alloc_array[i].name = val["name"].encode("utf-8")
+        dispatch_res = dispatch_fn(self.device, pipe_result, kernel_specs, data_length, data_ptr, buffer_alloc_array, buffer_alloc_len, byte_length, is_buffer)
         if realize:
             read_fn = getattr(self.lib, "forge_read_output_buf")
             read_fn.argtypes = ctypes.c_void_p, ctypes.c_int
-            # read_fn.restype = ctypes.c_void_p
             read_fn.restype = ctypes.POINTER(ctypes.c_float)
-            # data_length = len(data)
-            data_length = data.size     # pass size (not len) so we can retrieve 2d array data
-            data = read_fn(dispatch_res, data_length)
-            return np.ctypeslib.as_array(data, shape=(data_length,)).copy()
+            data = read_fn(dispatch_res, output_shape[0] * output_shape[1])
+            return np.ctypeslib.as_array(data, shape=(output_shape[0], output_shape[1])).copy()
         else:
             return dispatch_res
     
+    def realize(self, data_ptr, buffer_shape, output_data_shape):
+        read_fn = getattr(self.lib, "forge_read_output_buf")
+        read_fn.argtypes = ctypes.c_void_p, ctypes.c_int
+        read_fn.restype = ctypes.POINTER(ctypes.c_float)
+        data = read_fn(ctypes.c_void_p(data_ptr), buffer_shape[0] * buffer_shape[1])
+        return np.ctypeslib.as_array(data, shape=buffer_shape).copy()
 
 if __name__ == "__main__":
-    c = _MetalOps()
-    print(c._device_info())
+    # c = _MetalOps()
+    # print(c._device_info())
+    pass

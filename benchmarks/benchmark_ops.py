@@ -33,7 +33,14 @@ def benchmark(op: str, iters: int = 5):
             data = np.random.uniform(100, 500, size = val).astype(np.float32)
             # numpy
             start_numpy = time.perf_counter()
-            np.log(data[1:] / data[:-1])
+            match op:
+                case "log_returns":
+                    np.log(data[1:] / data[:-1])
+                case "mean":
+                    log_rets = np.log(data[1:] / data[:-1])
+                    np.mean(log_rets)
+                case _:
+                    raise RuntimeError(f"{op} not supported for numpy benchmarking")
             numpy_ms = (time.perf_counter() - start_numpy) * 1000
             # forge
             start_forge = time.perf_counter()
@@ -122,6 +129,6 @@ def save_results(averages: dict, op: str):
 
 if __name__ == "__main__":
     averages, op = benchmark("log_returns")
+    # averages, op = benchmark("mean")
     print_summary(averages, op)
     if SAVE: save_results(averages, op)
-

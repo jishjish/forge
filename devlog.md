@@ -60,3 +60,7 @@ Find last 5 completed tasks
 
 ## 2026-05-27
     * shapetracker for return shape on chained operations 
+
+## 2026-05-29
+    * dynamic dispatch buffers
+    * reshape data on output

@@ -1,26 +1,24 @@
- 
-def generate_metal_log_returns_kernel(**kwargs) -> str:
-    s = """
-    #include <metal_stdlib>
-    using namespace metal;
-    kernel void log_returns(
-        device const float* prices  [[buffer(0)]],
-        device float* returns       [[buffer(1)]],
-        constant int& data_length   [[buffer(2)]],
-        uint id                     [[thread_position_in_grid]]
-    ) {
-    """
-    return s
-
-def generate_metal_mean_kernel(**kwargs) -> str:
-    s = """
-    #include <metal_stdlib>
-    using namespace metal;
-    kernel void mean(
-        device const float* returns  [[buffer(0)]],
-        device float* averages       [[buffer(1)]],
-        constant int& data_length    [[buffer(2)]],
-        uint id                      [[thread_position_in_grid]]
-    ) {
-    """
-    return s
+KERNELS = {
+    "log_returns": {
+        "buffers": [
+            {"qualifier": "device const", "type": "float*", "name": "prices"},
+            {"qualifier": "device",       "type": "float*", "name": "returns"},
+            {"qualifier": "constant",     "type": "int&",   "name": "data_length"},
+        ]
+    },
+    "mean": {
+        "buffers": [
+            {"qualifier": "device const", "type": "float*", "name": "returns"},
+            {"qualifier": "device",       "type": "float*", "name": "averages"},
+            {"qualifier": "constant",     "type": "int&",   "name": "data_length"},
+        ]
+    },
+    "std_dev": {
+        "buffers": [
+            {"qualifier": "device const", "type": "float*", "name": "returns"},
+            {"qualifier": "device",       "type": "float*", "name": "averages"},
+            {"qualifier": "device",       "type": "float*", "name": "std_dev"},
+            {"qualifier": "constant",     "type": "int&",   "name": "data_length"},
+        ]
+    },
+}
