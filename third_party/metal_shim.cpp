@@ -132,9 +132,7 @@ extern "C" {
 
     void* forge_allocate_input_buffer(void* device, void* data_ptr, int byte_length)
     {
-        /*
-            Allocate an input buffer for dispatch.
-        */
+        // Allocate an input buffer for dispatch.
         return ((MTL::Device*)device)->newBuffer(data_ptr, byte_length, MTL::ResourceStorageModeShared);
     }
 
@@ -178,19 +176,15 @@ extern "C" {
         KernelSpecs* kernel_specs, 
         int data_length, 
         void* data_ptr,
-        void* in_buf_ptr,
         BufferAllocationData* buffer_alloc_data,
         int buffer_alloc_len,
-        int byte_length
+        int byte_length,
+        bool is_buffer
     )
     {
-        MTL::Buffer* in_buf;
-        if (in_buf_ptr)
-        {
-            in_buf = (MTL::Buffer*)in_buf_ptr;
-        } else {
-            in_buf = (MTL::Buffer*)forge_allocate_input_buffer(device, data_ptr, byte_length);
-        }
+        MTL::Buffer* in_buf = is_buffer 
+            ? (MTL::Buffer*)data_ptr 
+            : (MTL::Buffer*)forge_allocate_input_buffer(device, data_ptr, byte_length);
         MTL::CommandQueue* queue = ((MTL::Device*)device)->newCommandQueue();
         MTL::CommandBuffer* cmd_buf = queue->commandBuffer();
         MTL::ComputeCommandEncoder* encoder = cmd_buf->computeCommandEncoder();
@@ -212,7 +206,7 @@ extern "C" {
             } else if (strcmp(type, "constant") == 0){
                 buf = (MTL::Buffer*)forge_allocate_constant_buffer(device, data_length);
             } else if (strcmp(type, "output") == 0){
-                buf = (MTL::Buffer*)forge_allocate_output_buffer(device, data_length);
+                buf = (MTL::Buffer*)forge_allocate_output_buffer(device, byte_length);
                 out_buf = buf;
             } 
             encoder->setBuffer(buf, 0, index);
