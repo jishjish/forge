@@ -1,7 +1,7 @@
 class ShapeTracker:
     def __init__(self, pipeline: list[dict], data_dim: dict) -> None:
         self.pipeline = pipeline
-        self.base_shape = (data_dim["assets"], data_dim["entries"]) # rows / cols
+        self.base_shape = (data_dim["entries"], data_dim["assets"])
         self.shape_states = {}
 
     def calculate_output_shape(self):
@@ -9,20 +9,21 @@ class ShapeTracker:
             op = step["op"]
             match op:
                 case "log_returns":
-                    shape = (self.base_shape[0], self.base_shape[1] - 1)
-                    extract = "trim_last_col"
+                    # shape = (self.base_shape[0], self.base_shape[1] - 1)
+                    shape = (self.base_shape[0] - 1, self.base_shape[1])
                 case "mean":
                     rows, cols = self.shape_states["log_returns"]["shape"]
                     shape = (rows, 1)
-                    extract = "first_col"
                 case "std_dev":
                     rows, cols = self.shape_states["log_returns"]["shape"]
                     shape = (rows, 1)
-                    extract = "first_col"
+                # case "covariance":
+                #     rows, cols = self.shape_states["log_returns"]["shape"]
+                #     shape = (rows, rows)
+                #     extract = "full"
                 case "covariance":
                     rows, cols = self.shape_states["log_returns"]["shape"]
-                    shape = (rows, rows)
-                    extract = "full"
+                    shape = (cols, cols)  # assets x assets
                 case "matmul":
                     cov_shape = self.shape_states["covariance"]["shape"]
                     std_dev_shape = self.shape_states["std_dev"]["shape"]
@@ -30,15 +31,13 @@ class ShapeTracker:
                     k2, n = std_dev_shape
                     assert k1 == k2
                     shape = (m, n)
-                    extract = "matrix"
                 case "normalize":
                     rows, cols = self.shape_states["covariance"]["shape"]
                     shape = (rows, rows)
-                    extract = "full"
                 case _:
                     return
-            self.shape_states[op] = {"shape": shape, "extract": extract}
-        return list(self.shape_states.values())[-1]
+            self.shape_states[op] = {"op": op, "shape": shape}
+        return list(self.shape_states.values())
 
 if __name__ == "__main__":
     PIPELINE = [
