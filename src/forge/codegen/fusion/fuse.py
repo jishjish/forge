@@ -1,30 +1,25 @@
-"""
-https://craftinginterpreters.com/
-
-1) Scanning: take linear stream of chars and chunk them
-2) Parsing: takes flat sequence of tokens and builds a tree (parse tree / abstract syntax tree)
-3) Static analysis
-    - 
-"""
 import re
 import importlib
+from pathlib import Path
+from ...helpers import DEBUG
 from ..kernel import KERNELS
 from utils import get_op_import_path 
 
 class Fusion:
-    def __init__(self, ops):
-        self.ops = ops
-        self.op_import_paths = [get_op_import_path(op) for op in self.ops]
-        self.buffers = [KERNELS[op]["buffers"] for op in self.ops]
-        self.flattened_buffers = [item for sublist in self.buffers for item in sublist]
+    def __init__(self, ops, shapes):
+        self.decomp_pipeline = ops
+        self.ops = [op["op"] for op in ops]
+        self.buffers = [buf for op in self.ops for buf in KERNELS[op]["buffers"]]
+        self.shapes = shapes
 
-    def _build_kernel(self):
+    def _build_kernel(self, segmented_kernels: list[dict]):
+        buffers = [buf for op in segmented_kernels for buf in KERNELS[op["op"]]["buffers"]]
         fused_kernel = f"""
         #include <metal_stdlib>
         using namespace metal;
-        kernel void {self.ops[-1]} (\n"""
+        kernel void {segmented_kernels[-1]["op"]} (\n"""
         seen = {}
-        for buffer in self.flattened_buffers:
+        for buffer in buffers:
             if buffer["name"] not in seen:
                 seen[buffer["name"]] = buffer
         unique_buffers = list(seen.values())
@@ -34,9 +29,10 @@ class Fusion:
         fused_kernel += "        uint id  [[thread_position_in_grid]]\n    ) {"
         return fused_kernel
 
-    def _build_ops(self, gpu, **kwargs):
+    def _build_ops(self, gpu, ops, **kwargs):
+        op_import_paths = [get_op_import_path(ops)]
         agg_ops = ""
-        for path in self.op_import_paths:
+        for path in op_import_paths:
             try: op_module = importlib.import_module(path)
             except ModuleNotFoundError: raise RuntimeError(f"Op module not found: {path}")
             op_cls = getattr(op_module, f"generate_{gpu.device_type.lower()}")
@@ -45,18 +41,23 @@ class Fusion:
         return agg_ops
 
     def _localize_variables(self, source_code: str, **kwargs):
-        assets = kwargs.get("assets", 1)
+        # determine which variables should be local to kernel
         entries = kwargs.get("stride", kwargs.get("entries", 0))
-
-        local_init_values = {"float": {0}, "int": 0}
+        assets = kwargs.get("assets", 1)
+        #TODO: init logic; hardcoded right now for op body if(id...)
+        # local_init_values = {"float": {0}, "int": 0}
+        local_init_values = {"float": "{0}", "int": "0"}
         final_output = [b["name"] for b in KERNELS[self.ops[-1]]["buffers"] if b["qualifier"] == "device"]
-        buffs_to_localize = [op["name"] for op in self.flattened_buffers if op["qualifier"] == "device" and op["name"] not in final_output]
+        buffs_to_localize = [op["name"] for op in self.buffers if op["qualifier"] == "device" and op["name"] not in final_output]
         op_body = source_code
         for name in buffs_to_localize:
+            is_array = f"{name}[" in source_code
+            if is_array:
+                continue
             op_body = op_body.replace(name, f"{name}_local")
             op_body = re.sub(rf'.*{name}.*\[\],?\n', '', op_body)
             op_body = re.sub(rf'.*{name}.*\[\[buffer\(\d+\)\]\],?\n', '', op_body)
-            match = next((item for item in self.flattened_buffers if item["name"] == "returns"), None)
+            match = next((item for item in self.buffers if item["name"] == "returns"), None)
             type_str = match["type"].strip("*&")
             dtype_replacement = local_init_values[type_str]
             op_body = op_body.replace(
@@ -65,73 +66,34 @@ class Fusion:
             )
         return op_body
     
-    def _check_buffer_alloc_seq(self, source_code: str):
-        pass
+    # def _check_buffer_alloc_seq(self, source_code: str):
+    #     """ check sequencing of buffers to ensure sequential; buffer(0), buffer(1)..."""
+    #     pass
+
+    def can_fuse(self, curr, next):
+        same_type = curr["type"] == next["type"]
+        same_shape = curr["shape"] == next["shape"]
+        local_dep = curr["input"] is None or curr["type"]
+        return same_type and same_shape and local_dep
+
+    def _segment_kernels(self):
+        merged = [{**d, **s} for d, s in zip(self.decomp_pipeline, self.shapes)]
+        segments = [[merged[0]]]
+        for i in range(len(merged) - 1):
+            if self.can_fuse(merged[i], merged[i + 1]):
+                segments[-1].append(merged[i + 1])
+            else:
+                segments.append([merged[i + 1]])
+        return segments
 
     def fuse(self, gpu, **kwargs):
-        base_source_code = self._build_kernel() + self._build_ops(gpu, **kwargs)
-        fused = self._localize_variables(base_source_code, **kwargs)
-        return fused + "\n}"
-
-if __name__ == "__main__":
-    a = """
-        #include <metal_stdlib>
-            using namespace metal;
-            kernel void mean (
-        device const float* prices  [[buffer(0)]],
-        device float* returns  [[buffer(1)]],
-        constant int& data_length  [[buffer(2)]],
-        device float* averages  [[buffer(3)]],
-        uint id  [[thread_position_in_grid]]
-    )
-        if (id == 0 || id >= data_length) return;
-        for (int a = 0; a < 3; a++)
-        {
-            int offset = a * 5000;
-            if (id % 5000 == 0)
-            {
-                returns = 0.0;
-            } else {
-                returns = log(prices / prices);
-            }
-        }
-
-
-        float sum = 0;
-        int count = 3;
-
-        for (int a = 0; a < 3; a++)
-        {
-            sum += returns;
-        }
-
-        float average = sum / count;
-        averages = average;
-    """
-    ops = ["log_returns", "mean"]
-
-    local_init_values = {"float": 0.0, "int": 0}
-    buffers = [KERNELS[op]["buffers"] for op in ops]
-    flat_buffs = [item for sublist in buffers for item in sublist]
-    final_output = [b["name"] for b in KERNELS[ops[-1]]["buffers"] if b["qualifier"] == "device"]
-    buffs_to_localize = [op["name"] for op in flat_buffs if op["qualifier"] == "device" and op["name"] not in final_output]
-    op_body = a
-    for name in buffs_to_localize:
-        op_body = op_body.replace(name, f"{name}_local")
-        op_body = re.sub(rf'.*{name}.*\[\],?\n', '', op_body)
-        op_body = re.sub(rf'.*{name}.*\[\[buffer\(\d+\)\]\],?\n', '', op_body)
-        match = next((item for item in flat_buffs if item["name"] == "returns"), None)
-        type_str = match["type"].strip("*&")
-        dtype_replacement = local_init_values[type_str]
-        op_body = op_body.replace(
-            "if (id == 0 || id >= data_length) return;",
-            f"if (id == 0 || id >= data_length) return;\n        {type_str} {match["name"]}_local = {dtype_replacement};"
-        )
-    print(op_body)
-
-
-
-    total_elements = 22
-    b =f"float {name}_local[{total_elements}] = {{0}};"
-    print(b)
-
+        fused_code = {}
+        segmented_kernels = self._segment_kernels()
+        for segment in segmented_kernels:
+            kernel_name = "_".join(op["op"] for op in segment)
+            header = self._build_kernel(segment)
+            body = "\n".join(self._build_ops(gpu, op["op"], **kwargs) for op in segment)
+            fused = self._localize_variables(header + body, **kwargs) + "\n}"
+            fused_code[kernel_name] = {"source_code": fused}
+            if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] | Source after fusion\n: {fused + "\n}"}")
+        return fused_code
