@@ -9,7 +9,6 @@ class ShapeTracker:
             op = step["op"]
             match op:
                 case "log_returns":
-                    # shape = (self.base_shape[0], self.base_shape[1] - 1)
                     shape = (self.base_shape[0] - 1, self.base_shape[1])
                 case "mean":
                     rows, cols = self.shape_states["log_returns"]["shape"]
