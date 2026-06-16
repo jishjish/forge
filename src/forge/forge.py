@@ -61,26 +61,38 @@ if __name__ == "__main__":
 
     f = Forge()
     # (entries, assets)
-    # data=np.random.uniform(100, 500, size=(15, 3)).astype(np.float32)
-    # (entries, assets) -- 4 timesteps, 2 assets
+    data=np.random.uniform(100, 500, size=(15, 3)).astype(np.float32)
     data = np.array([
         [100.0, 100.0],
-        [110.0, 90.0],
-        [121.0, 81.0],
-        [133.1, 72.9],
+        [110.0, 105.0],
+        [121.0, 115.0],
+        [133.1, 120.0],
+        [146.4, 130.0],
     ], dtype=np.float32)
 
-    # asset 0: steady +10% each period
-    # log returns: [0.0953, 0.0953, 0.0953]
-    #
-    # asset 1: steady -10% each period  
-    # log returns: [-0.1054, -0.1054, -0.1054]
-    #
-    # mean per timestep: (0.0953 + -0.1054) / 2 = -0.0050 for all 3
-
+    data = np.array([
+        [99.0, 100.0, 100.0],
+        [98.0, 110.0, 105.0],
+        [100.0, 121.0, 115.0],
+        [102.0, 133.1, 120.0],
+        [101.0, 146.4, 130.0],
+    ], dtype=np.float32)
     print('data is\n')
     print(data)
-    a = f.run('mean', data=data)
-    fr = f.realize(a)
-    print('\noutput')
+
+    log_ret = f.run('log_returns', data=data)
+    fr = f.realize(log_ret)
+    print('\n log returns:')
     print(fr)
+
+    mean = f.run('mean', data=data)
+    me = f.realize(mean)
+    print('\n mean:')
+    print(me)
+
+    stddev = f.run('std_dev', data=data)
+    st = f.realize(stddev)
+    print('\n std dev:')
+    print(st)
+
+    
