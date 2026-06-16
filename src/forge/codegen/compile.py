@@ -60,12 +60,29 @@ class Compile:
         prev_shape = (self.data_dim["entries"], self.data_dim["assets"])
         final_shape = self.shapes[-1]["shape"]
 
+        buffer_cache = {}
         for i, (kernel_name, kernel_data) in enumerate(fused_code.items()):
             output_shape = self.shapes[i]["shape"]
+            if (ref := self.decomp_pipeline[i]["input"]) is not None and isinstance(ref, list):
+                # multi op inputs, reference first entry
+                lookback = self.decomp_pipeline[i]["input"][0]
+                prev_shape = next((shape["shape"] for shape in self.shapes if shape["op"] == lookback), None)
+            elif ref is not None:
+                prev_shape = next((shape["shape"] for shape in self.shapes if shape["op"] == ref), None)
+            else:
+                prev_shape = prev_shape
+
             entries_int, assets_int = prev_shape
             # set entries / asset shape as np array
             spec_array = np.empty((entries_int, assets_int), dtype=np.float32)
-            res = self.dispatch(kernel_data["source_code"], kernel_name, prev_output, spec_array, prev_shape, realize, is_buffer)
+
+            if isinstance(self.decomp_pipeline[i]["input"], list):
+                inputs = {name: buffer_cache[name] for name in self.decomp_pipeline[i]["input"]}
+                res = self.dispatch(kernel_data["source_code"], kernel_name, list(inputs.values()), spec_array, prev_shape, realize, is_buffer)
+            else:
+                res = self.dispatch(kernel_data["source_code"], kernel_name, prev_output, spec_array, prev_shape, realize, is_buffer)
+
+            buffer_cache[kernel_name] = res
             prev_output = res
             is_buffer = True
             prev_shape = output_shape
