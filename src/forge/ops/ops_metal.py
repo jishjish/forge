@@ -114,7 +114,6 @@ class _MetalCompile:
         else:
             data_ptr = [data]  # already a void* from previous dispatch
 
-        num_inputs = len(data_ptr)
         data_ptr_arr = (ctypes.c_void_p * len(data_ptr))(*data_ptr)
         byte_length = spec_array.nbytes
         data_length = spec_array.shape[0]   # reference entries shape (entries, assets)
@@ -127,7 +126,6 @@ class _MetalCompile:
             ctypes.POINTER(KernelSpecs),            # kernel_specs
             ctypes.c_int,                           # data_length 
             ctypes.POINTER(ctypes.c_void_p),        # data_ptr
-            ctypes.c_int,                           # number of inputs in array
             ctypes.POINTER(BufferAllocationData),   # buffer allocation data
             ctypes.c_int,                           # buffer allocation length
             ctypes.c_int,                           # byte_length
@@ -145,7 +143,6 @@ class _MetalCompile:
             kernel_specs, 
             data_length, 
             data_ptr_arr, 
-            num_inputs,
             buffer_alloc_array, 
             buffer_alloc_len, 
             byte_length, 
