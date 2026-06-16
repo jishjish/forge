@@ -80,10 +80,10 @@ class _MetalCompile:
         self, 
         source_code: str, 
         function_name: str, 
-        gpu,                            # pydantic gpu model
-        data: np.ndarray | int,
+        gpu,                                    # pydantic gpu model
+        data: np.ndarray | int | list[int],
         spec_array: np.ndarray, 
-        buffer_alloc_data,              # buffer allocation data from kernel
+        buffer_alloc_data,                      # buffer allocation data from kernel
         buffer_alloc_len,
         output_shape,
         realize: bool,
@@ -108,10 +108,13 @@ class _MetalCompile:
         # create dispatch pipeline
         dispatch_fn = getattr(self.lib, "forge_dispatch_pipeline") 
         if isinstance(data, np.ndarray):
-            data_ptr = data.ctypes.data
+            data_ptr = [data.ctypes.data]
+        elif isinstance(data, list):
+            data_ptr = data
         else:
-            data_ptr = data  # already a void* from previous dispatch
+            data_ptr = [data]  # already a void* from previous dispatch
 
+        data_ptr_arr = (ctypes.c_void_p * len(data_ptr))(*data_ptr)
         byte_length = spec_array.nbytes
         data_length = spec_array.shape[0]   # reference entries shape (entries, assets)
 
@@ -122,7 +125,7 @@ class _MetalCompile:
             ctypes.c_void_p,                        # pipeline 
             ctypes.POINTER(KernelSpecs),            # kernel_specs
             ctypes.c_int,                           # data_length 
-            ctypes.c_void_p,                        # data_ptr
+            ctypes.POINTER(ctypes.c_void_p),        # data_ptr
             ctypes.POINTER(BufferAllocationData),   # buffer allocation data
             ctypes.c_int,                           # buffer allocation length
             ctypes.c_int,                           # byte_length
@@ -134,7 +137,17 @@ class _MetalCompile:
             buffer_alloc_array[i].index = val["index"]
             buffer_alloc_array[i].type = val["type"].encode("utf-8")
             buffer_alloc_array[i].name = val["name"].encode("utf-8")
-        dispatch_res = dispatch_fn(self.device, pipe_result, kernel_specs, data_length, data_ptr, buffer_alloc_array, buffer_alloc_len, byte_length, is_buffer)
+        dispatch_res = dispatch_fn(
+            self.device, 
+            pipe_result, 
+            kernel_specs, 
+            data_length, 
+            data_ptr_arr, 
+            buffer_alloc_array, 
+            buffer_alloc_len, 
+            byte_length, 
+            is_buffer,
+        )
         if realize:
             read_fn = getattr(self.lib, "forge_read_output_buf")
             read_fn.argtypes = ctypes.c_void_p, ctypes.c_int

@@ -9,14 +9,15 @@ class ShapeTracker:
             op = step["op"]
             match op:
                 case "log_returns":
-                    # shape = (self.base_shape[0], self.base_shape[1] - 1)
                     shape = (self.base_shape[0] - 1, self.base_shape[1])
                 case "mean":
                     rows, cols = self.shape_states["log_returns"]["shape"]
-                    shape = (rows, 1)
+                    # shape = (rows, 1)
+                    shape = (1, cols)
                 case "std_dev":
                     rows, cols = self.shape_states["log_returns"]["shape"]
-                    shape = (rows, 1)
+                    # shape = (rows, 1)
+                    shape = (1, cols)
                 # case "covariance":
                 #     rows, cols = self.shape_states["log_returns"]["shape"]
                 #     shape = (rows, rows)

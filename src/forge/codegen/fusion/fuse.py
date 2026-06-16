@@ -89,11 +89,23 @@ class Fusion:
     def fuse(self, gpu, **kwargs):
         fused_code = {}
         segmented_kernels = self._segment_kernels()
+        prev_shape = (kwargs["entries"], kwargs["assets"])
+        shape_map = {op["op"]: op["shape"] for segment in segmented_kernels for op in segment}
         for segment in segmented_kernels:
             kernel_name = "_".join(op["op"] for op in segment)
             header = self._build_kernel(segment)
-            body = "\n".join(self._build_ops(gpu, op["op"], **kwargs) for op in segment)
-            fused = self._localize_variables(header + body, **kwargs) + "\n}"
+
+            if (ref := segment[0]["input"]) is not None and isinstance(ref, list):
+                lookback = segment[0]["input"][0]
+                prev_shape = shape_map[lookback]
+            elif ref is not None:
+                prev_shape = shape_map[ref]
+            else:
+                prev_shape = (kwargs["entries"], kwargs["assets"])
+
+            seg_kwargs = {**kwargs, "entries": prev_shape[0] ,"stride": prev_shape[0]}
+            body = "\n".join(self._build_ops(gpu, op["op"], **seg_kwargs) for op in segment)
+            fused = self._localize_variables(header + body, **seg_kwargs) + "\n}"
             fused_code[kernel_name] = {"source_code": fused}
             if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] | Source after fusion\n: {fused + "\n}"}")
         return fused_code
