@@ -7,17 +7,12 @@ PIPELINE = [
 
 def generate_metal(gpu: BaseModel, **kwargs) -> str:
     assets = kwargs.get("assets", 1)
-    stride = kwargs.get("stride", kwargs.get("entries", 0))
+    stride = kwargs.get("stride", kwargs.get("entries", 0)) 
     return f"""
-    
-    float sum = 0;
-    int count = {assets};
-
-    for (int a = 0; a < {assets}; a++)
+    float sum = 0.0;
+    for (int t = 0; t < {stride}; t++)
     {{
-        sum += returns[id * {assets} + a];
+        sum += returns[t * {assets} + id];
     }}
-
-    float average = sum / count;
-    averages[id] = average;
+    averages[id] = sum / {stride};
     """
