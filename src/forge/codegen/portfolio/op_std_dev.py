@@ -6,26 +6,15 @@ PIPELINE = [
     {"op": "std_dev",     "input": ["log_returns", "mean"],     "type": "elementwise"}
 ]
 
-
 def generate_metal(gpu: BaseModel, **kwargs) -> str:
     assets = kwargs.get("assets", 1)
     stride = kwargs.get("stride", kwargs.get("entries", 0))
-
     return f"""
-    if (id == 0 || id >= data_length) return;
-
     float squared_deviations = 0.0;
-    float variance = 0.0;
-
-    for (int a = 0; a < {assets}; a++)
+    for (int t = 0; t < {stride}; t++) 
     {{
-        float deviation = averages[id] - returns[a * {stride} + id];
-        float square = deviation * deviation;
-        squared_deviations += square;
+        float deviation = averages[id] - returns[t * {assets} + id];
+        squared_deviations += deviation * deviation;
     }}
-
-    variance += squared_deviations / {assets};
-    float std_dev_res = sqrt(variance);
-
-    std_dev[id] = std_dev_res;
+    std_dev[id] = sqrt(squared_deviations / {stride});
     """
