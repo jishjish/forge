@@ -5,7 +5,7 @@
         - [ ] covariance 
         - [ ] matmul 
         - [ ] normalize
-- [ ] SQLite kernel config cache
+- [x] SQLite kernel config cache
 - [ ] Kernel config search (threadgroup sizes, elements per thread)
 - [ ] JIT realize
 - [ ] Test suite
