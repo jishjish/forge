@@ -70,25 +70,25 @@ if __name__ == "__main__":
         [146.4, 130.0],
     ], dtype=np.float32)
 
-    data = np.array([
-        [99.0, 100.0, 100.0],
-        [98.0, 110.0, 105.0],
-        [100.0, 121.0, 115.0],
-        [102.0, 133.1, 120.0],
-        [101.0, 146.4, 130.0],
-    ], dtype=np.float32)
+    # data = np.array([
+    #     [99.0, 100.0, 100.0],
+    #     [98.0, 110.0, 105.0],
+    #     [100.0, 121.0, 115.0],
+    #     [102.0, 133.1, 120.0],
+    #     [101.0, 146.4, 130.0],
+    # ], dtype=np.float32)
     print('data is\n')
     print(data)
 
-    log_ret = f.run('log_returns', data=data)
-    fr = f.realize(log_ret)
-    print('\n log returns:')
-    print(fr)
+    # log_ret = f.run('log_returns', data=data)
+    # fr = f.realize(log_ret)
+    # print('\n log returns:')
+    # print(fr)
 
-    mean = f.run('mean', data=data)
-    me = f.realize(mean)
-    print('\n mean:')
-    print(me)
+    # mean = f.run('mean', data=data)
+    # me = f.realize(mean)
+    # print('\n mean:')
+    # print(me)
 
     stddev = f.run('std_dev', data=data)
     st = f.realize(stddev)
