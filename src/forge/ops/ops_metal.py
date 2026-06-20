@@ -86,7 +86,6 @@ class _MetalCompile:
         buffer_alloc_data,                      # buffer allocation data from kernel
         buffer_alloc_len,
         output_shape,
-        realize: bool,
         is_buffer: bool
     ):
         # get function to compile source code; set arg and return type for ffi
@@ -148,14 +147,7 @@ class _MetalCompile:
             byte_length, 
             is_buffer,
         )
-        if realize:
-            read_fn = getattr(self.lib, "forge_read_output_buf")
-            read_fn.argtypes = ctypes.c_void_p, ctypes.c_int
-            read_fn.restype = ctypes.POINTER(ctypes.c_float)
-            data = read_fn(dispatch_res, output_shape[0] * output_shape[1])
-            return np.ctypeslib.as_array(data, shape=(output_shape[0], output_shape[1])).copy()
-        else:
-            return dispatch_res
+        return dispatch_res
     
     def realize(self, data_ptr, buffer_shape, output_data_shape):
         read_fn = getattr(self.lib, "forge_read_output_buf")

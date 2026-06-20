@@ -30,32 +30,31 @@ class Forge:
         self.gpu_info = gpu_info
         if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] | [dim]Device initialized:[/dim] {self.gpu_info}")
 
-    def run(self, op: str, realize: bool = False, **kwargs):
+    def run(self, op: str, **kwargs):
         assert op in self._portfolio_ops or op in self._linalg_ops, f"{op} not found. Supported ops: {self._portfolio_ops + self._linalg_ops}"
         import_path = get_op_import_path(op) # import based on provided op (thru portfolio or linalg)
 
         try: decomp_pipeline = getattr(importlib.import_module(import_path), "PIPELINE")
         except ModuleNotFoundError: raise RuntimeError(f"Error retrieving decomposition pipeline: {import_path}")
-        if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] \n | Data realization: {realize} \n | Import path: {import_path} for {op} operation \n | Kwargs: {kwargs}")
+        if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] \n | Import path: {import_path} for {op} operation \n | Kwargs: {kwargs}")
 
         assert self.gpu_info is not None, "Device not initialized"
         data = kwargs.get("data", 1)
         comp = Compile(self.gpu_info, op, decomp_pipeline, data)
-        state, data_length, buffer_shape, output_data_shape = comp.generate(realize=realize, **kwargs) 
         handle = str(uuid.uuid4())
-        self._results[handle] = {"data_ptr": state, "data_length": data_length, "buffer_shape": buffer_shape, "output_data_shape": output_data_shape["shape"]}
+        self._results[handle] = {"comp": comp, "kwargs": kwargs}
         return handle
     
     def realize(self, handle):
-        r = self._results[handle]
-        data_ptr, buffer_shape, output_data_shape = r["data_ptr"], r["buffer_shape"], r["output_data_shape"]
+        comp = self._results[handle]["comp"]
+        kwargs = self._results[handle]["kwargs"]
+        data_ptr, data_length, buffer_shape, output_data_shape = comp.generate(**kwargs) 
         _ops_file = [file for file in (Path(__file__).parent/"ops").iterdir() if file.stem.startswith("ops_") and file.stem[len("ops_"):].upper() == self.gpu_info.device_type.upper()]
         module = importlib.import_module(f"forge.ops.{_ops_file[0].stem}")
         cls = getattr(module, f"_{self.gpu_info.device_type.capitalize()}Compile")
         req = cls()
         return req.realize(data_ptr, buffer_shape, output_data_shape)
        
-
 if __name__ == "__main__":
     import numpy as np
 
@@ -70,15 +69,15 @@ if __name__ == "__main__":
         [146.4, 130.0],
     ], dtype=np.float32)
 
-    # data = np.array([
-    #     [99.0, 100.0, 100.0],
-    #     [98.0, 110.0, 105.0],
-    #     [100.0, 121.0, 115.0],
-    #     [102.0, 133.1, 120.0],
-    #     [101.0, 146.4, 130.0],
-    # ], dtype=np.float32)
-    print('data is\n')
-    print(data)
+    data = np.array([
+        [99.0, 100.0, 100.0],
+        [98.0, 110.0, 105.0],
+        [100.0, 121.0, 115.0],
+        [102.0, 133.1, 120.0],
+        [101.0, 146.4, 130.0],
+    ], dtype=np.float32)
+    # print('data is\n')
+    # print(data)
 
     # log_ret = f.run('log_returns', data=data)
     # fr = f.realize(log_ret)
@@ -90,9 +89,40 @@ if __name__ == "__main__":
     # print('\n mean:')
     # print(me)
 
-    stddev = f.run('std_dev', data=data)
-    st = f.realize(stddev)
-    print('\n std dev:')
-    print(st)
+    # stddev = f.run('std_dev', data=data)
+    # st = f.realize(stddev)
+    # print('\n std dev:')
+    # print(st)
+
+
+
+    import time
+    data = np.random.uniform(50, 500, size=(500, 10)).astype(np.float32)
+
+    t0 = time.perf_counter()
+    handle = f.run('std_dev', data=data)
+    t1 = time.perf_counter()
+    result = f.realize(handle)
+    t2 = time.perf_counter()
+
+    forge_build_time = t1-t0
+    forge_runtime = t2-t1
+    print(f"run (build): {forge_build_time:.6f}s")
+    print(f"realize (execute): {forge_runtime:.6f}s")
+
+
+    # --- numpy
+    t0 = time.perf_counter()
+    lr = np.log(data[1:] / data[:-1])
+    mean = lr.mean(axis=0)
+    std = lr.std(axis=0)
+    t1 = time.perf_counter()
+    numpy_runtime = t1-t0
+    print(f"numpy: {numpy_runtime:.6f}s")
 
     
+    delta = numpy_runtime - forge_runtime
+    if delta > 0:
+        print(f"forge outperformed by: {delta}")
+    else:
+        print(f"numpy outperformed by: {delta}")

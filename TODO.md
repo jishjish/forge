@@ -6,8 +6,9 @@
         - [ ] matmul 
         - [ ] normalize
 - [x] SQLite kernel config cache
+- [x] JIT realize
+- [x] Update tests to remove `realize` param
 - [ ] Kernel config search (threadgroup sizes, elements per thread)
-- [ ] JIT realize
 - [ ] Test suite
 - [ ] Benchmarking
 - [ ] Confirm Shapetracker outputs
