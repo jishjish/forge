@@ -7,7 +7,7 @@
         - [ ] normalize
 - [x] SQLite kernel config cache
 - [x] JIT realize
-- [ ] Update tests to remove `realize` param
+- [x] Update tests to remove `realize` param
 - [ ] Kernel config search (threadgroup sizes, elements per thread)
 - [ ] Test suite
 - [ ] Benchmarking
