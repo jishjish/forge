@@ -45,10 +45,10 @@ class Forge:
         self._results[handle] = {"comp": comp, "kwargs": kwargs}
         return handle
     
-    def realize(self, handle, realize: bool = False):
+    def realize(self, handle):
         comp = self._results[handle]["comp"]
         kwargs = self._results[handle]["kwargs"]
-        data_ptr, data_length, buffer_shape, output_data_shape = comp.generate(realize=realize, **kwargs) 
+        data_ptr, data_length, buffer_shape, output_data_shape = comp.generate(**kwargs) 
         _ops_file = [file for file in (Path(__file__).parent/"ops").iterdir() if file.stem.startswith("ops_") and file.stem[len("ops_"):].upper() == self.gpu_info.device_type.upper()]
         module = importlib.import_module(f"forge.ops.{_ops_file[0].stem}")
         cls = getattr(module, f"_{self.gpu_info.device_type.capitalize()}Compile")
@@ -76,8 +76,8 @@ if __name__ == "__main__":
         [102.0, 133.1, 120.0],
         [101.0, 146.4, 130.0],
     ], dtype=np.float32)
-    print('data is\n')
-    print(data)
+    # print('data is\n')
+    # print(data)
 
     # log_ret = f.run('log_returns', data=data)
     # fr = f.realize(log_ret)
@@ -89,9 +89,40 @@ if __name__ == "__main__":
     # print('\n mean:')
     # print(me)
 
-    stddev = f.run('std_dev', data=data)
-    st = f.realize(stddev)
-    print('\n std dev:')
-    print(st)
+    # stddev = f.run('std_dev', data=data)
+    # st = f.realize(stddev)
+    # print('\n std dev:')
+    # print(st)
+
+
+
+    import time
+    data = np.random.uniform(50, 500, size=(500, 10)).astype(np.float32)
+
+    t0 = time.perf_counter()
+    handle = f.run('std_dev', data=data)
+    t1 = time.perf_counter()
+    result = f.realize(handle)
+    t2 = time.perf_counter()
+
+    forge_build_time = t1-t0
+    forge_runtime = t2-t1
+    print(f"run (build): {forge_build_time:.6f}s")
+    print(f"realize (execute): {forge_runtime:.6f}s")
+
+
+    # --- numpy
+    t0 = time.perf_counter()
+    lr = np.log(data[1:] / data[:-1])
+    mean = lr.mean(axis=0)
+    std = lr.std(axis=0)
+    t1 = time.perf_counter()
+    numpy_runtime = t1-t0
+    print(f"numpy: {numpy_runtime:.6f}s")
 
     
+    delta = numpy_runtime - forge_runtime
+    if delta > 0:
+        print(f"forge outperformed by: {delta}")
+    else:
+        print(f"numpy outperformed by: {delta}")
