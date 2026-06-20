@@ -19,7 +19,7 @@ class Compile:
         self.decomp_pipeline = decomp_pipeline
         self.output_path = Path(__file__).resolve().parent / "cached_code"
         self._ops_file = [file for file in (Path(__file__).parent.parent/"ops").iterdir() if file.stem.startswith("ops_") and file.stem[len("ops_"):].upper() == self.gpu.device_type.upper()]
-        self.cleaned_data = self._handle_data(self.gpu, data)
+        self.cleaned_data = self._handle_data(data)
         self.data_dim = self.cleaned_data[1]
         
         # get shapes throughtout the decomp pipeline
@@ -33,16 +33,16 @@ class Compile:
         for op in self.ops: self.cached_code[op] = {"source_code": self.cache.lookup_cache(op_name=op, original_data_shape=str((self.data_dim["entries"], self.data_dim["assets"])), device_name=self.gpu.name)}
         if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] \n | GPU: {self.gpu.device_type}, \n | out: {self.output_path}")
 
-    def dispatch(self, source_code, func_name, data, spec_array, output_shape, realize, is_buffer):
+    def dispatch(self, source_code, func_name, data, spec_array, output_shape, is_buffer):
         module = importlib.import_module(f"forge.ops.{self._ops_file[0].stem}")
         cls = getattr(module, f"_{self.gpu.device_type.capitalize()}Compile")
         req = cls()
         buffer_alloc_data = extract_buffer_count_from_source(source_code)
         if DEBUG >= 1: print(f"[dim]forge ({Path(__file__).name})[/dim] \n | ops: {self._ops_file} \n | module: {module} \n | cls: {cls}")
         self.cache.write_cache(op_name=func_name, op_code=source_code, original_data_shape=str((self.data_dim["entries"], self.data_dim["assets"])), device_name=self.gpu.name, threadgroup_size=None, execution_ns=None)
-        return req._compile(source_code, func_name, self.gpu, data, spec_array, buffer_alloc_data, len(buffer_alloc_data), output_shape, realize, is_buffer)     # call compilation file from corresponding device
+        return req._compile(source_code, func_name, self.gpu, data, spec_array, buffer_alloc_data, len(buffer_alloc_data), output_shape, is_buffer)     # call compilation file from corresponding device
 
-    def _handle_data(self, gpu: BaseModel, data):
+    def _handle_data(self, data):
         match type(data):
             case np.ndarray: np_data = data.astype(np.float32)
             case pd.Series | pd.DataFrame: np_data = data.to_numpy(dtype=np.float32)
@@ -62,7 +62,7 @@ class Compile:
         f = Fusion(self.decomp_pipeline, self.shapes)
         return f.fuse(self.gpu, **self.data_dim)
     
-    def generate(self, data, realize: bool = False):
+    def generate(self, **kwargs):
         assert self.data_dim["entries"] >= 2, "Calculations require at least two datapoints."
         # check cache for pre built kernels
         if all(self.cached_code.get(op, {}).get("source_code") for op in self.ops):
@@ -94,9 +94,9 @@ class Compile:
 
             if isinstance(self.decomp_pipeline[i]["input"], list):
                 inputs = {name: buffer_cache[name] for name in self.decomp_pipeline[i]["input"]}
-                res = self.dispatch(kernel_data["source_code"], kernel_name, list(inputs.values()), spec_array, prev_shape, realize, is_buffer)
+                res = self.dispatch(kernel_data["source_code"], kernel_name, list(inputs.values()), spec_array, prev_shape, is_buffer)
             else:
-                res = self.dispatch(kernel_data["source_code"], kernel_name, prev_output, spec_array, prev_shape, realize, is_buffer)
+                res = self.dispatch(kernel_data["source_code"], kernel_name, prev_output, spec_array, prev_shape, is_buffer)
 
             buffer_cache[kernel_name] = res
             prev_output = res
