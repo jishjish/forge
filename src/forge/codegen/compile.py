@@ -9,7 +9,7 @@ from pathlib import Path
 from pydantic import BaseModel
 from forge.helpers import DEBUG
 from utils import extract_buffer_count_from_source
-from shapetracker.shapetracker import ShapeTracker
+from ..shapetracker.shapetracker import ShapeTracker
 from ..codegen.fusion.fuse import Fusion
 
 class Compile:
